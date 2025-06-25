@@ -1,0 +1,89 @@
+dataProduct:
+  dataProductOwnerDisplayName: Name Surname
+  projectOwner: user:name.surname_agilelab.it
+  projectOwnerDisplayName: Name Surname
+  environment: development
+  domain: healthcare
+  projectKind: system
+  kind: dataproduct
+  domainId: urn:dmb:dmn:healthcare
+  id: urn:dmb:dp:healthcare:databricks-test-dp:0
+  description: Databricks test
+  devGroup: group:agile_lab
+  ownerGroup: name.surname_agilelab.it
+  dataProductOwner: user:name.surname_agilelab.it
+  email: name.surname@agilelab.it
+  version: 0.2.0-SNAPSHOT-2
+  fullyQualifiedName: null
+  name: Databricks-test
+  informationSLA: null
+  maturity: null
+  useCaseTemplateId: urn:dmb:utm:dataproduct-template:0.0.0
+  infrastructureTemplateId: urn:dmb:itm:dataproduct-provisioner:1
+  billing: { }
+  tags: [ ]
+  specific: { }
+  components:
+    - kind: outputport
+      id: urn:dmb:cmp:healthcare:databricks-test-dp:0:vaccinations-output-port
+      description: Vaccinations Output Port
+      name: Vaccinations Output Port
+      fullyQualifiedName: null
+      version: 0.0.0
+      infrastructureTemplateId: urn:dmb:itm:databricks-provisioner:1
+      useCaseTemplateId: urn:dmb:utm:databricks-outputport-template:0.0.0
+      dependsOn:
+        - urn:dmb:cmp:healthcare:databricks-test:0:databricks-dlt
+      platform: Databricks
+      technology: Unity Catalog
+      outputPortType: SQL
+      creationDate: 2023-09-04T09:31:45.086Z
+      startDate: 2023-09-04T09:31:45.086Z
+      dataContract:
+        schema:
+          - name: date
+            dataType: DATE
+          - name: location_key
+            dataType: TEXT
+          - name: new_persons_vaccinated
+            dataType: NUMBER
+          - name: new_persons_fully_vaccinated
+            dataType: NUMBER
+          - name: new_vaccine_doses_administered
+            dataType: NUMBER
+          - name: cumulative_persons_vaccinated
+            dataType: NUMBER
+          - name: cumulative_persons_fully_vaccinated
+            dataType: NUMBER
+          - name: cumulative_vaccine_doses_administered
+            dataType: NUMBER
+        termsAndConditions: null
+        endpoint: null
+        SLA:
+          intervalOfChange: null
+          timeliness: null
+          upTime: null
+      dataSharingAgreement:
+        purpose: null
+        billing: null
+        security: null
+        intendedUsage: null
+        limitations: null
+        lifeCycle: null
+        confidentiality: null
+      tags: []
+      sampleData: {}
+      semanticLinking: []
+      specific:
+        metastore: metastore # Not used if workspace provides a URL to an existing Workspace
+        workspace: healthcare_databricks-test_0_development # Either a name of the workspace to be created, or a URL to an existing Workspace
+        catalogName: my_catalog
+        schemaName: my_schema
+        tableName: my_table
+        viewName: my_view
+        sqlWarehouseName: Serverless Starter Warehouse
+        workspaceOP: healthcare_databricks-test_0_development # Either a name of the workspace to be created, or a URL to an existing Workspace
+        catalogNameOP: my_catalog_op
+        schemaNameOP: my_schema_op
+        viewNameOP: output_port_name
+componentIdToProvision: urn:dmb:cmp:healthcare:databricks-test-dp:0:vaccinations-output-port

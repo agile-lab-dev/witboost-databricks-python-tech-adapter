@@ -1,0 +1,71 @@
+dataProduct:
+  dataProductOwnerDisplayName: Name Surname
+  projectOwner: user:name.surname_agilelab.it
+  projectOwnerDisplayName: Name Surname
+  environment: development
+  domain: healthcare
+  projectKind: system
+  kind: dataproduct
+  domainId: urn:dmb:dmn:healthcare
+  id: urn:dmb:dp:healthcare:databricks-test-dp:0
+  description: Databricks test
+  devGroup: group:agile_lab
+  ownerGroup: name.surname_agilelab.it
+  dataProductOwner: user:name.surname_agilelab.it
+  email: name.surname@agilelab.it
+  version: 0.2.0-SNAPSHOT-2
+  fullyQualifiedName: null
+  name: Databricks-test
+  informationSLA: null
+  maturity: null
+  useCaseTemplateId: urn:dmb:utm:dataproduct-template:0.0.0
+  infrastructureTemplateId: urn:dmb:itm:dataproduct-provisioner:1
+  billing: { }
+  tags: [ ]
+  specific: { }
+  components:
+    - kind: workload
+      id: urn:dmb:cmp:healthcare:databricks-test:0:databricks-dlt
+      description: Databricks Workload
+      name: Databricks DLT
+      fullyQualifiedName: null
+      version: 0.0.0
+      infrastructureTemplateId: urn:dmb:itm:databricks-provisioner:1
+      useCaseTemplateId: urn:dmb:utm:databricks-workload-dlt-template:0.0.0
+      dependsOn: [ ]
+      platform: Azure
+      technology: Databricks
+      workloadType: batch
+      connectionType: DataPipeline
+      tags: [ ]
+      readsFrom: [ ]
+      specific:
+        workspace: healthcare_databricks-test_0_development # Either a name of the workspace to be created, or a URL to an existing Workspace
+        pipelineName: newPipeline
+        productEdition: ADVANCED
+        continuous: false
+        git:
+          gitRepoUrl: https://gitlab.com/<...>/healthcare/databrickstest/databricksdlt
+          gitReference: master
+          gitReferenceType: BRANCH
+        notebooks:
+          - /Workspace/Users/<deploy_user>/<dp_name>_<dp_major_version>/<component_name>/main
+        notebook_hash:
+          "/Workspace/Users/<deploy_user>/<dp_name>_<dp_major_version>/<component_name>/main": hash_main
+        files: [ ]
+        metastore: metastoreName # Not used if workspace provides a URL to an existing Workspace
+        catalog: dp_catalog
+        target: schema
+        photon: false
+        notificationsMails: [ ]
+        notificationsAlerts: [ ]
+        channel: PREVIEW
+        cluster:
+          mode: LEGACY
+          numWorkers: null
+          minWorkers: 1
+          maxWorkers: 3
+          workerType: Standard_D4ds_v5
+          driverType: Standard_D4ds_v5
+          sparkConf: {}
+componentIdToProvision: urn:dmb:cmp:healthcare:databricks-test:0:databricks-dlt

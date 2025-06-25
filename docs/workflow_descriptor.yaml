@@ -1,0 +1,87 @@
+dataProduct:
+  dataProductOwnerDisplayName: Name Surname
+  projectOwner: user:name.surname_agilelab.it
+  projectOwnerDisplayName: Name Surname
+  environment: development
+  domain: healthcare
+  projectKind: system
+  kind: dataproduct
+  domainId: urn:dmb:dmn:healthcare
+  id: urn:dmb:dp:healthcare:databricks-test-dp:0
+  description: Databricks test
+  devGroup: group:agile_lab
+  ownerGroup: name.surname_agilelab.it
+  dataProductOwner: user:name.surname_agilelab.it
+  email: name.surname@agilelab.it
+  version: 0.2.0-SNAPSHOT-2
+  fullyQualifiedName: null
+  name: Databricks-test
+  informationSLA: null
+  maturity: null
+  useCaseTemplateId: urn:dmb:utm:dataproduct-template:0.0.0
+  infrastructureTemplateId: urn:dmb:itm:dataproduct-provisioner:1
+  billing: { }
+  tags: [ ]
+  specific: { }
+  components:
+    - kind: workload
+      id: urn:dmb:cmp:healthcare:databricks-test:0:databricks-workflow
+      description: Databricks Workload
+      name: Databricks Workflow
+      fullyQualifiedName: null
+      version: 0.0.0
+      infrastructureTemplateId: urn:dmb:itm:databricks-provisioner:1
+      useCaseTemplateId: urn:dmb:utm:databricks-workload-workflow-template:0.0.0
+      dependsOn: [ ]
+      platform: Azure
+      technology: Databricks
+      workloadType: batch
+      connectionType: DataPipeline
+      tags: [ ]
+      readsFrom: [ ]
+      specific:
+        workspace: healthcare_databricks-test_0_qa # Either a name of the workspace to be created, or a URL to an existing Workspace
+        override: false
+        repoPath: databrickstest_0/databricks-workflow
+        git:
+          gitRepoUrl: https://gitlab.com/.../healthcare/databrickstest/databricks-workflow
+        workflow:
+          created_time: null
+          creator_user_name: null
+          job_id: null
+          run_as_user_name: null
+          settings:
+            continuous: null
+            deployment: null
+            description: null
+            edit_mode: null
+            email_notifications:
+              no_alert_for_skipped_runs: null
+              on_duration_warning_threshold_exceeded: null
+              on_failure: null
+              on_start: null
+              on_streaming_backlog_exceeded: null
+              on_success: null
+            environments: null
+            format: null
+            git_source: null
+            health: null
+            job_clusters: null
+            max_concurrent_runs: null
+            name: healthcare_databrickstest_databricks-workflow_qa
+            notification_settings: null
+            parameters: null
+            queue: null
+            run_as: null
+            schedule: null
+            tags: null
+            tasks: null
+            timeout_seconds: null
+            trigger: null
+            webhook_notifications:
+              on_duration_warning_threshold_exceeded: null
+              on_failure: null
+              on_start: null
+              on_streaming_backlog_exceeded: null
+              on_success: null
+componentIdToProvision: urn:dmb:cmp:healthcare:databricks-test:0:databricks-workflow

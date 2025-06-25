@@ -1,0 +1,66 @@
+dataProduct:
+  dataProductOwnerDisplayName: Name Surname
+  projectOwner: user:name.surname_agilelab.it
+  projectOwnerDisplayName: Name Surname
+  environment: development
+  domain: healthcare
+  projectKind: system
+  kind: dataproduct
+  domainId: urn:dmb:dmn:healthcare
+  id: urn:dmb:dp:healthcare:databricks-test-dp:0
+  description: Databricks test
+  devGroup: group:agile_lab
+  ownerGroup: name.surname_agilelab.it
+  dataProductOwner: user:name.surname_agilelab.it
+  email: name.surname@agilelab.it
+  version: 0.2.0-SNAPSHOT-2
+  fullyQualifiedName: null
+  name: Databricks-test
+  informationSLA: null
+  maturity: null
+  useCaseTemplateId: urn:dmb:utm:dataproduct-template:0.0.0
+  infrastructureTemplateId: urn:dmb:itm:dataproduct-provisioner:1
+  billing: { }
+  tags: [ ]
+  specific: { }
+  components:
+    - kind: workload
+      id: urn:dmb:cmp:healthcare:databricks-test:0:databricks-job
+      description: Databricks Workload
+      name: Databricks Job
+      fullyQualifiedName: null
+      version: 0.0.0
+      infrastructureTemplateId: urn:dmb:itm:databricks-provisioner:1
+      useCaseTemplateId: urn:dmb:utm:databricks-workload-job-template:0.0.0
+      dependsOn: [ ]
+      platform: Azure
+      technology: Databricks
+      workloadType: batch
+      connectionType: DataPipeline
+      tags: [ ]
+      readsFrom: [ ]
+      specific:
+        workspace: healthcare_databricks-test_0_development # Either a name of the workspace to be created, or a URL to an existing Workspace
+        jobName: healthcare_databricks-test_0_databricks-job
+        description: null
+        repoPath: databrickstest_0/databricksjob
+        git:
+          gitRepoUrl: https://gitlab.com/<...>/healthcare/databrickstest/databricksjob
+          gitReference: master
+          gitReferenceType: BRANCH
+          gitPath: notebook/main
+        scheduling: null
+        cluster:
+          clusterSparkVersion: 13.3.x-scala2.12
+          nodeTypeId: Standard_D4ds_v5
+          numWorkers: 1
+          spotBidMaxPrice: -1
+          firstOnDemand: 1
+          spotInstances: false
+          availability: ON_DEMAND_AZURE
+          driverNodeTypeId: Standard_D4ds_v5
+          sparkConf:
+            spark_eventLog_enabled: "true"
+          sparkEnvVars: {}
+          runtimeEngine: PHOTON
+componentIdToProvision: urn:dmb:cmp:healthcare:databricks-test:0:databricks-job
