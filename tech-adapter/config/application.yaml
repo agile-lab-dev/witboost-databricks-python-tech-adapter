@@ -1,0 +1,33 @@
+azure:
+  auth:
+    skuType: "PREMIUM" #Allowed only PREMIUM or TRIAL. If different, premium will be set as default
+
+
+databricks:
+  permissions:
+    workload:
+      repo:
+        owner: "CAN_MANAGE"       #CAN_EDIT, CAN_MANAGE, CAN_READ, CAN_RUN, NO_PERMISSIONS
+        developer: "CAN_MANAGE"   #CAN_EDIT, CAN_MANAGE, CAN_READ, CAN_RUN, NO_PERMISSIONS
+      job:
+        owner: "CAN_MANAGE"       #CAN_MANAGE, CAN_MANAGE_RUN, CAN_VIEW, IS_OWNER
+        developer: "CAN_MANAGE"   #CAN_MANAGE, CAN_MANAGE_RUN, CAN_VIEW, IS_OWNER
+      pipeline:
+        owner: "CAN_MANAGE"       #CAN_MANAGE, CAN_RUN, CAN_VIEW, IS_OWNER
+        developer: "CAN_MANAGE"   #CAN_MANAGE, CAN_RUN, CAN_VIEW, IS_OWNER
+    outputPort:
+      owner: "SELECT"         #ALL_PRIVILEGES, APPLY_TAG, SELECT
+      developer: "SELECT"     #ALL_PRIVILEGES, APPLY_TAG, SELECT
+
+git:
+  provider: GITLAB
+
+usecasetemplateid:
+  workload:
+    job: ["urn:dmb:utm:databricks-workload-job-template"]
+    dlt: ["urn:dmb:utm:databricks-workload-dlt-template"]
+    workflow: ["urn:dmb:utm:databricks-workload-workflow-template"]
+  outputport: ["urn:dmb:utm:databricks-outputport-template"]
+
+misc:
+  developmentEnvironmentName: development

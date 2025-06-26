@@ -13,12 +13,42 @@ image:
   # -- The imagePullPolicy for a container and the tag of the image affect when the kubelet attempts to pull (download) the specified image.
   pullPolicy: Always
 
-# -- define extra variables to add to the container(s)
+# -- define extra variables to add to the container(s), like the Azure permissions configurations if necessary
 # e.g:
 # extraEnvVars:
 #   - name: FOO
 #     value: "10"
-extraEnvVars: []
+extraEnvVars:
+  - name: GIT__USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: databricks-addons-secrets
+        key: GIT_USERNAME
+  - name: GIT__TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: databricks-addons-secrets
+        key: GIT_TOKEN
+  - name: AZURE__AUTH__TENANT_ID
+    valueFrom:
+      secretKeyRef:
+        name: databricks-addons-secrets
+        key: AZURE_TENANT_ID
+  - name: AZURE__AUTH__CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: databricks-addons-secrets
+        key: AZURE_CLIENT_SECRET
+  - name: AZURE__AUTH__CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: databricks-addons-secrets
+        key: AZURE_CLIENT_ID
+  - name: DATABRICKS__AUTH__ACCOUNT_ID
+    valueFrom:
+      secretKeyRef:
+        name: databricks-addons-secrets
+        key: DATABRICKS_ACCOUNT_ID
 
 # -- readiness probe spec
 readinessProbe: {}

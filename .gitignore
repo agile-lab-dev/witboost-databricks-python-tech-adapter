@@ -3,3 +3,8 @@ __pycache__/
 *.xml
 .idea
 **/.python-version
+.env
+
+### HELM ###
+
+helm/charts

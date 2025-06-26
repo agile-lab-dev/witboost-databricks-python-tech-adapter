@@ -11,7 +11,9 @@ This repository is part of our [Starter Kit](https://github.com/agile-lab-dev/wi
 # Databricks Tech Adapter - Python SDK
 
 - [Overview](#overview)
+- [HLD](docs/HLD.md)
 - [Building](#building)
+- [Configuring](#configuring)
 - [Running](#running)
 - [OpenTelemetry Setup](tech-adapter/docs/opentelemetry.md)
 - [Deploying](#deploying)
@@ -120,6 +122,10 @@ More details can be found [here](tech-adapter/docs/docker.md).
 _Note:_ the version for the project is automatically computed using information gathered from Git, using branch name and tags. Unless you are on a release branch `1.2.x` or a tag `v1.2.3` it will end up being `0.0.0`. You can follow this branch/tag convention or update the version computation to match your preferred strategy.
 
 **CI/CD:** the pipeline is based on GitLab CI as that's what we use internally. It's configured by the `.gitlab-ci.yaml` file in the root of the repository. You can use that as a starting point for your customizations.
+
+## Configuring
+
+The Databricks Tech Adapter needs a set of environment variables in order to work, and some behaviours can be modified through an `application.yaml` file. Check [Configuration](docs/application_config.md) for more information.
 
 ## Running
 
