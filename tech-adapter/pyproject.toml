@@ -28,6 +28,8 @@ urllib3 = "^2.5.0"
 loguru = "^0.7.3"
 databricks-sdk = "^0.57.0"
 pydantic-settings = "^2.10.1"
+azure-mgmt-databricks = "^2.0.0"
+azure-identity = "^1.23.0"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"

@@ -1,36 +1,28 @@
 openapi: 3.0.3
 info:
-  title: Tech Adapter Micro Service
-  description: "Microservice responsible to handle provisioning and access control requests for one or more data product components."
-  version: "{{version}}"
+  title: Specific Provisioner Micro Service
+  description: 'Microservice responsible to handle provisioning and access control requests for one or more data product components.'
+  version: '2.2.0'
 tags:
-  - name: TechAdapter
+  - name: SpecificProvisioner
     description: All the provisioning related operations
 paths:
   /v2/validate:
     post:
       tags:
-        - TechAdapter
-      summary: Validate a deployment request
+        - SpecificProvisioner
+      summary: Asynchronously validate a provisioning request
       operationId: asyncValidate
       requestBody:
-        description: A deployment request descriptor wrapped as a string into a simple object
+        description: Details of a provisioning request to be validated
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidationRequest'
+              $ref: '#/components/schemas/ProvisioningRequest'
         required: true
-
-      response_model:
-        content:
-          application/json:
-            schema:
-              type: string
-
       responses:
-
         202:
-          description: Returns the DAG id of the Provisioning Plan
+          description: It returns a token that can be used for polling the async validation operation status and results
           content:
             application/json:
               schema:
@@ -40,7 +32,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationError'
+                $ref: '#/components/schemas/RequestValidationError'
         500:
           description: System problem
           content:
@@ -50,8 +42,8 @@ paths:
   /v2/validate/{token}/status:
     get:
       tags:
-        - TechAdapter
-      summary: Get the status for a provisioning request
+        - SpecificProvisioner
+      summary: Get status and results of an async validation operation
       operationId: getValidationStatus
       parameters:
         - name: token
@@ -66,23 +58,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationStatus"
+                $ref: '#/components/schemas/ValidationStatus'
         400:
           description: Invalid input
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/RequestValidationError'
         500:
           description: System problem
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemError"
+                $ref: '#/components/schemas/SystemError'
   /v1/provision:
     post:
       tags:
-        - TechAdapter
+        - SpecificProvisioner
       summary: Deploy a data product or a single component starting from a provisioning descriptor
       operationId: provision
       requestBody:
@@ -90,15 +82,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProvisioningRequest"
+              $ref: '#/components/schemas/ProvisioningRequest'
         required: true
       responses:
-        200:
-          description: It synchronously returns the request result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProvisioningStatus"
+        #        200:
+        #          description: It synchronously returns the request result
+        #          content:
+        #            application/json:
+        #              schema:
+        #                $ref: '#/components/schemas/ProvisioningStatus'
         202:
           description: If successful returns a provisioning deployment task token that can be used for polling the request status
           content:
@@ -110,18 +102,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/RequestValidationError'
         500:
           description: System problem
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemError"
+                $ref: '#/components/schemas/SystemError'
   /v1/provision/{token}/status:
     get:
       tags:
-        - TechAdapter
-      summary: Get the status for a provisioning request
+        - SpecificProvisioner
+      summary: Get the status of a provisioning request
       operationId: getStatus
       parameters:
         - name: token
@@ -136,31 +128,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProvisioningStatus"
+                $ref: '#/components/schemas/ProvisioningStatus'
         400:
           description: Invalid input
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/RequestValidationError'
         500:
           description: System problem
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemError"
+                $ref: '#/components/schemas/SystemError'
   /v1/validate:
     post:
       tags:
-        - TechAdapter
+        - SpecificProvisioner
       summary: Validate a provisioning request
       operationId: validate
       requestBody:
-        description: Provisioning descriptor to be validated
+        description: Details of a provisioning request to be validated
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProvisioningRequest"
+              $ref: '#/components/schemas/ProvisioningRequest'
         required: true
       responses:
         200:
@@ -168,17 +160,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationResult"
+                $ref: '#/components/schemas/ValidationResult'
         500:
           description: System problem
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemError"
+                $ref: '#/components/schemas/SystemError'
   /v1/unprovision:
     post:
       tags:
-        - TechAdapter
+        - SpecificProvisioner
       summary: Undeploy a data product or a single component given the provisioning descriptor relative to the latest complete provisioning request
       operationId: unprovision
       requestBody:
@@ -186,15 +178,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProvisioningRequest"
+              $ref: '#/components/schemas/ProvisioningRequest'
         required: true
       responses:
-        200:
-          description: It synchronously returns the request result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProvisioningStatus"
+        #        200:
+        #          description: It synchronously returns the request result
+        #          content:
+        #            application/json:
+        #              schema:
+        #                $ref: '#/components/schemas/ProvisioningStatus'
         202:
           description: If successful returns a provisioning deployment task token that can be used for polling the request status
           content:
@@ -206,25 +198,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/RequestValidationError'
         500:
           description: System problem
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemError"
+                $ref: '#/components/schemas/SystemError'
+
   /v1/updateacl:
     post:
       tags:
-        - TechAdapter
-      summary: Request the access to a tech adapter component
+        - SpecificProvisioner
+      summary: Request the access to a specific provisioner component
       operationId: updateacl
       requestBody:
         description: An access request object. The provisoning info reported in `provisionInfo` refer to the latest complete provisioning workflow of the target component
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAclRequest"
+              $ref: '#/components/schemas/UpdateAclRequest'
         required: true
       responses:
         200:
@@ -232,7 +225,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProvisioningStatus"
+                $ref: '#/components/schemas/ProvisioningStatus'
         202:
           description: If successful returns a provisioning deployment task token that can be used for polling the request status
           content:
@@ -244,13 +237,82 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/RequestValidationError'
         500:
           description: System problem
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemError"
+                $ref: '#/components/schemas/SystemError'
+  /v1/reverse-provisioning:
+    post:
+      tags:
+        - SpecificProvisioner
+      summary: Execute a reverse provisioning operation
+      operationId: runReverseProvisioning
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseProvisioningRequest'
+        required: true
+      responses:
+        200:
+          description: It synchronously returns the reverse provisioning response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReverseProvisioningStatus'
+        202:
+          description: It returns a reverse provisioning task token that can be used for polling the request status
+          content:
+            application/json:
+              schema:
+                type: string
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationError'
+        500:
+          description: System problem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemError'
+  /v1/reverse-provisioning/{token}/status:
+    get:
+      tags:
+        - SpecificProvisioner
+      summary: Get status and results of a reverse provisioning operation
+      operationId: getReverseProvisioningStatus
+      parameters:
+        - name: token
+          in: path
+          description: token that identifies the request
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The request status and results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReverseProvisioningStatus'
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationError'
+        500:
+          description: System problem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemError'
 components:
   schemas:
     ValidationStatus:
@@ -259,17 +321,16 @@ components:
         - status
       properties:
         status:
+          description: >
+            - `RUNNING`: the validation task is still running
+
+            - `COMPLETED`: the operation is complete and the validation result is available (`info.publicInfo` field)
+
+            - `FAILED`: an exception occurred while running the validation task
           type: string
           enum: [RUNNING, COMPLETED, FAILED]
-        result:
-          $ref: "#/components/schemas/ValidationResult"
-    ValidationRequest:
-      type: object
-      required:
-        - descriptor
-      properties:
-        descriptor:
-          type: string
+        info:
+          $ref: '#/components/schemas/ValidationInfo'
     UpdateAclRequest:
       required:
         - refs
@@ -281,23 +342,23 @@ components:
           description: Identities (i.e. users and groups) involved in the ACL update request
           example:
             [
-              "user:alice",
-              "user:bob",
-              "group:groupA",
-              "group:groupB",
-              "group:groupC",
+              'user:alice',
+              'user:bob',
+              'group:groupA',
+              'group:groupB',
+              'group:groupC',
             ]
           items:
             type: string
         provisionInfo:
-          $ref: "#/components/schemas/ProvisionInfo"
+          $ref: '#/components/schemas/ProvisionInfo'
     DescriptorKind:
       type: string
       description: >
         Values:
          * `DATAPRODUCT_DESCRIPTOR` - Complete descriptor of a data product. It is used in the data product level provisioning workflow.
          * `COMPONENT_DESCRIPTOR` - Provisioning descriptor for a single data product component. Includes both the complete data product descriptor (`dataProduct` object field) and the id of the component to be provisioned (`componentIdToProvision` string field).
-         * `DATAPRODUCT_DESCRIPTOR_WITH_RESULTS` - This value is not currently used in the scope of a tech adapter.
+         * `DATAPRODUCT_DESCRIPTOR_WITH_RESULTS` - This value is not currently used in the scope of a specific provisioner.
       enum:
         [
           DATAPRODUCT_DESCRIPTOR,
@@ -308,13 +369,27 @@ components:
       required:
         - descriptorKind
         - descriptor
+        - removeData
       type: object
       properties:
         descriptorKind:
-          $ref: "#/components/schemas/DescriptorKind"
+          $ref: '#/components/schemas/DescriptorKind'
         descriptor:
           type: string
           description: Descriptor specification in yaml format. Its structure changes according to `descriptorKind`.
+        latestEnrichedDescriptor:
+          type: string
+          description: >
+            *Filled only in case of provision/unprovison requests.*
+
+
+            Complete data product descriptor (YAML format), enriched with provisioning info provided by the specific provisioners during the latest (successful or failed) provisioning/unprovisioning operation for each component.
+            If available, provisioning information is reported in the `info` fields at both the data product and component levels. The base schema for the `info` object is the same as [Info](#/components/schemas/Info), but additional fields may be included, such as the `latestProvisioningOperation` object. This object contains information about the most recent provisioning operation performed on the component, including the operation type (e.g. Deploy, Undeploy) in the `operation` field, as well as the status of the operation (e.g. NotStarted, Failed, Successful) in the `status` field.
+            Please note that the information contained in a `info` object represents the most recent data provided by a specific provisioner for the corresponding component. However, this information may not have been provided during the last data product provisioning operation. For example, if the provisioning operation fails and the component's specific provisioner is not called, the information doesn't change. Only the `latestProvisioningOperation` object always refers to the most recent provisioning operation on the data product.
+        removeData:
+          type: boolean
+          default: false
+          description: If true, when a component is undeployed, its underlying data will also be deleted
     ProvisioningStatus:
       required:
         - status
@@ -328,17 +403,37 @@ components:
           deprecated: true
           type: string
         info:
-          $ref: "#/components/schemas/Info"
+          $ref: '#/components/schemas/Info'
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Log'
     ValidationResult:
+      description: Result of a validation operation on a provided descriptor
       required:
         - valid
       type: object
       properties:
         valid:
+          description: Whether the provided descriptor is valid or not
           type: boolean
         error:
-          $ref: "#/components/schemas/ValidationError"
+          $ref: '#/components/schemas/ValidationError'
+    ProvisionInfo:
+      required:
+        - request
+        - result
+      type: object
+      description: 'Information related to the provisioning workflow of a data product component'
+      properties:
+        request:
+          type: string
+          description: 'Provisioning descriptor of type `COMPONENT_DESCRIPTOR` (see [DescriptorKind](#/components/schemas/DescriptorKind) schema) in JSON format. It had been used to provision the data product component'
+        result:
+          type: string
+          description: 'Result message (e.g. a provisiong error or a success message returned by the specific provisioner in the [ProvisioningStatus](#/components/schemas/ProvisioningStatus))'
     ValidationError:
+      description: Validation error related to a provided descriptor
       required:
         - errors
       type: object
@@ -347,19 +442,27 @@ components:
           type: array
           items:
             type: string
-    ProvisionInfo:
+    RequestValidationError:
       required:
-        - request
-        - result
+        - errors
       type: object
-      description: "Information related to the provisioning workflow of a data product component"
       properties:
-        request:
+        errors:
+          type: array
+          deprecated: true
+          items:
+            type: string
+        userMessage:
           type: string
-          description: "Provisioning descriptor of type `COMPONENT_DESCRIPTOR` (see [DescriptorKind](#/components/schemas/DescriptorKind) schema) in JSON format. It had been used to provision the data product component"
-        result:
+          description: User-readable message to be displayed
+        input:
           type: string
-          description: "Result message (e.g. a provisiong error or a success message returned by the tech adapter in the [ProvisioningStatus](#/components/schemas/ProvisioningStatus))"
+          description: Optional field to include the file or descriptor that raised the error
+        inputErrorField:
+          type: string
+          description: Optional field to include the field path (in dot format) that raised the error
+        moreInfo:
+          $ref: "#/components/schemas/ErrorMoreInfo"
     SystemError:
       required:
         - error
@@ -367,6 +470,35 @@ components:
       properties:
         error:
           type: string
+          deprecated: true
+        userMessage:
+          type: string
+          description: User-readable message to be displayed
+        input:
+          type: string
+          description: Optional field to include the file or descriptor that raised the error
+        inputErrorField:
+          type: string
+          description: Optional field to include the field path (in dot format) that raised the error
+        moreInfo:
+          $ref: "#/components/schemas/ErrorMoreInfo"
+    ErrorMoreInfo:
+      required:
+        - problems
+        - solutions
+      type: object
+      description: Object that will include the more in-depth, specific information about the error
+      properties:
+        problems:
+          type: array
+          description: "Array of possible multiple problems: i.e. multiple validations failed"
+          items:
+            type: string
+        solutions:
+          type: array
+          description: Array of possible solutions that the developer gives to the user to solve the issue
+          items:
+            type: string
     Info:
       type: object
       required:
@@ -380,4 +512,83 @@ components:
             Note that only the values compliant to specific structures will be rendered in the "Technical Information" card of the Marketplace pages. [Check the documentation](https://docs.internal.witboost.agilelab.it/docs/p3_tech/p3_customizations/p3_4_templates/infrastructureTemplate#specific-provisioner-api-details) for additional details
         privateInfo:
           type: object
-          description: "All the values in this object will be stored in the deployed descriptor, but will not be shown in the Marketplace UI"
+          description: 'All the values in this object will be stored in the deployed descriptor, but will not be shown in the Marketplace UI'
+    ValidationInfo:
+      type: object
+      required:
+        - publicInfo
+      properties:
+        publicInfo:
+          $ref: "#/components/schemas/ValidationResult"
+    Log:
+      type: object
+      required:
+        - timestamp
+        - level
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          description: This is the severity level of the log
+          type: string
+          enum: [ DEBUG, INFO, WARNING , ERROR ]
+        message:
+          type: string
+        phase:
+          type: string
+    ReverseProvisioningRequest:
+      type: object
+      required:
+        - useCaseTemplateId
+        - environment
+      properties:
+        useCaseTemplateId:
+          type: string
+          description: Component's use case template id
+          example: urn:dmb:utm:op-standard:0.0.0
+        environment:
+          type: string
+          description: Target environment
+          example: production
+        params:
+          type: object
+          description: Reverse provisioning input params
+          example: {
+            "inputA": "value A",
+            "inputB": 1
+          }
+        catalogInfo:
+          type: object
+          description: Content of the current `catalog-info.yaml` of the component
+    ReverseProvisioningStatus:
+      required:
+        - status
+        - updates
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [RUNNING, COMPLETED, FAILED]
+          description: >
+            - `RUNNING`: the reverse provisioning operation is still running
+
+            - `COMPLETED`: the operation is complete and the `updates` object is ready
+
+            - `FAILED`: an exception occurred while running the reverse provisioning operation (additional details could be found in the `logs` array)
+        updates:
+          type: object
+          description: Field updates to be applied to the componenent's `catalog-info.yaml`. See the Reverse Provisioning documentation to learn more about the syntax of this object.
+          example: {
+            "metadata.fieldA": "Value A",
+            "spec.mesh.description": "Updated value",
+            "spec.fieldB": {
+              "subfieldA": "Value A",
+              "subfieldB": 1
+            }
+          }
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Log'

@@ -10,13 +10,16 @@ This section of the configuration file manages the integration with Azure and in
 
 This section handles the data required for authentication with Azure and for creating and managing resources such as the Databricks Workspace.
 
-Authentication is done using the triplet Tenant ID, Client ID, Client Secret which should be stored in the following environment variables:
+Authentication is done using the triplet Tenant ID, Client ID, Client Secret which should be stored in the following environment variables following Azure naming conventions:
 
 ```bash
-AZURE__AUTH__TENANT_ID=<my_tenant_id>
-AZURE__AUTH__CLIENT_ID=<my_client_id>
-AZURE__AUTH__CLIENT_SECRET=<my_client_secret>
+AZURE_TENANT_ID=<my_tenant_id>
+AZURE_CLIENT_ID=<my_client_id>
+AZURE_CLIENT_SECRET=<my_client_secret>
+AZURE__AUTH__SUBSCRIPTION_ID=<my_subscription_id>
 ```
+
+* **AZURE__AUTH__SUBSCRIPTION_ID**: The Azure subscription ID. Used to construct the resource ID.
 
 For further details on these variables, refer to [azure_databricks_config.md](azure_databricks_config.md).
 
@@ -42,14 +45,12 @@ Credentials are to be stored on the following environment variables:
 
 ```bash
 AZURE__PERMISSIONS__RESOURCE_GROUP=<my_resource_group>
-AZURE__PERMISSIONS__SUBSCRIPTION_ID=<my_subscription_id>
 AZURE__PERMISSIONS__AUTH_TENANT_ID=<my_tenant_id>
 AZURE__PERMISSIONS__AUTH_CLIENT_ID=<my_client_id>
 AZURE__PERMISSIONS__AUTH_CLIENT_SECRET=<my_client_secret>
 ```
 
 * **AZURE__PERMISSIONS__RESOURCE_GROUP**: The Azure resource group name. Used to construct the resource ID. If the Workspace already exists and should not be managed by the Tech Adapter, this value can be omitted as it's not used.
-* **AZURE__PERMISSIONS__SUBSCRIPTION_ID**: The Azure subscription ID. Used to construct the resource ID. If the Workspace already exists and should not be managed by the Tech Adapter, this value can be omitted as it's not used.
 * **AZURE__PERMISSIONS__AUTH_TENANT_ID**: The Azure tenant ID of the service principal.
 * **AZURE__PERMISSIONS__AUTH_CLIENT_ID**: The client ID of the service principal.
 * **AZURE__PERMISSIONS__AUTH_CLIENT_SECRET**: The client secret of the service principal.

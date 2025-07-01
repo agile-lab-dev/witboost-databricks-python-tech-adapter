@@ -65,7 +65,7 @@ class DatabricksMapper(Mapper):
             groups = list(self.account_client.groups.list(filter=f"displayName eq '{group_name_case_insensitive}'"))
         except Exception as e:
             error_msg = f"Databricks API call failed while retrieving group '{group_name_case_insensitive}': {e}"
-            logger.exception(error_msg)
+            logger.error(error_msg)
             raise DatabricksMapperError(error_msg) from e
 
         if not groups:
@@ -133,5 +133,5 @@ class DatabricksMapper(Mapper):
             return mail
         except Exception as e:
             error_msg = f"An unexpected error occurred while mapping the Witboost user '{user}'. Details: {e}"
-            logger.exception(error_msg)
+            logger.error(error_msg)
             raise DatabricksMapperError(error_msg) from e

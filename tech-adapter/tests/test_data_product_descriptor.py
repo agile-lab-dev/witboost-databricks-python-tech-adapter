@@ -42,12 +42,13 @@ class TestDataProductDescriptor(unittest.TestCase):
             components=[
                 OutputPort(
                     id="op1",
+                    useCaseTemplateId="urn:dmb:utm:component-id",
+                    infrastructureTemplateId="urn:dmb:itm:component-id-ta",
                     name="Output Port 1",
                     description="An output port",
                     specific={},
                     kind=ComponentKind.OUTPUTPORT,
                     version="1.0",
-                    infrastructureTemplateId="infra1",
                     outputPortType="Type1",
                     dependsOn=["op2"],  # Depends on another output port within the same Data Product
                     dataContract=DataContract(schema=[column1, column2]),  # Provide valid schema instances
@@ -57,12 +58,13 @@ class TestDataProductDescriptor(unittest.TestCase):
                 ),
                 OutputPort(
                     id="op2",
+                    useCaseTemplateId="urn:dmb:utm:component-id",
+                    infrastructureTemplateId="urn:dmb:itm:component-id-ta",
                     name="Output Port 2",
                     description="Another output port",
                     specific={},
                     kind=ComponentKind.OUTPUTPORT,
                     version="1.0",
-                    infrastructureTemplateId="infra2",
                     outputPortType="Type2",
                     dependsOn=[],  # No dependencies
                     dataContract=DataContract(schema=[]),
@@ -72,29 +74,33 @@ class TestDataProductDescriptor(unittest.TestCase):
                 ),
                 Workload(
                     id="wl1",
+                    useCaseTemplateId="urn:dmb:utm:component-id",
+                    infrastructureTemplateId="urn:dmb:itm:component-id-ta",
                     name="Workload 1",
                     description="A workload",
                     specific={},
                     kind=ComponentKind.WORKLOAD,
                     version="1.0",
-                    infrastructureTemplateId="infra2",
                     connectionType=ConnectionTypeWorkload.HOUSEKEEPING,
                     dependsOn=[],
                     tags=[],
                 ),
                 StorageArea(
                     id="sa1",
+                    useCaseTemplateId="urn:dmb:utm:component-id",
+                    infrastructureTemplateId="urn:dmb:itm:component-id-ta",
                     name="Storage Area 1",
                     description="A storage area",
                     specific={},
                     kind=ComponentKind.STORAGE,
                     owners=["Owner1"],
-                    infrastructureTemplateId="infra3",
                     dependsOn=[],
                     tags=[],
                 ),
                 Observability(
                     id="obs1",
+                    useCaseTemplateId="urn:dmb:utm:component-id",
+                    infrastructureTemplateId="urn:dmb:itm:component-id-ta",
                     name="Observability 1",
                     description="An observability component",
                     specific={},
@@ -182,6 +188,8 @@ class TestDataProductDescriptor(unittest.TestCase):
             description: Description for Output Port 1
             specific: {}
             kind: outputport
+            useCaseTemplateId: urn:dmb:utm:component-id
+            infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         valid_output_port_data = yaml.safe_load(valid_output_port_data)
@@ -194,6 +202,8 @@ class TestDataProductDescriptor(unittest.TestCase):
             description: Description for Output Port 2
             specific: {}
             kind: workload  # Invalid kind
+            useCaseTemplateId: urn:dmb:utm:component-id
+            infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         invalid_output_port_data = yaml.safe_load(invalid_output_port_data)
@@ -207,6 +217,8 @@ class TestDataProductDescriptor(unittest.TestCase):
           description: Description for Workload 1
           specific: {}
           kind: workload
+          useCaseTemplateId: urn:dmb:utm:component-id
+          infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         valid_workload_data = yaml.safe_load(valid_workload_data)
@@ -218,6 +230,8 @@ class TestDataProductDescriptor(unittest.TestCase):
           description: Description for Workload 2
           specific: {}
           kind: outputport  # Invalid kind
+          useCaseTemplateId: urn:dmb:utm:component-id
+          infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         invalid_workload_data = yaml.safe_load(invalid_workload_data)
@@ -231,6 +245,8 @@ class TestDataProductDescriptor(unittest.TestCase):
               description: Description for Storage 1
               specific: {}
               kind: STORAGE
+              useCaseTemplateId: urn:dmb:utm:component-id
+              infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         valid_storage_area_data = yaml.safe_load(valid_storage_area_data)
@@ -242,6 +258,8 @@ class TestDataProductDescriptor(unittest.TestCase):
             description: Description for Storage 2
             specific: {}
             kind: WORKLOAD  # Invalid kind
+            useCaseTemplateId: urn:dmb:utm:component-id
+            infrastructureTemplateId: urn:dmb:itm:component-id-ta
 
         """
 
@@ -256,6 +274,8 @@ class TestDataProductDescriptor(unittest.TestCase):
         description: Description for Observability 1
         specific: {}
         kind: OBSERVABILITY
+        useCaseTemplateId: urn:dmb:utm:component-id
+        infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         valid_observability_data = yaml.safe_load(valid_observability_data)
@@ -267,6 +287,8 @@ class TestDataProductDescriptor(unittest.TestCase):
         description: Description for Observability 2
         specific: {}
         kind: WORKLOAD  # Invalid kind
+        useCaseTemplateId: urn:dmb:utm:component-id
+        infrastructureTemplateId: urn:dmb:itm:component-id-ta
         """
 
         invalid_observability_data = yaml.safe_load(invalid_observability_data)
@@ -304,6 +326,8 @@ class TestDataProductDescriptor(unittest.TestCase):
           specific:
             version: "1.0"
           kind: "workload"
+          useCaseTemplateId: urn:dmb:utm:component-id
+          infrastructureTemplateId: urn:dmb:itm:component-id-ta
           version: "1.0"
           infrastructureTemplateId: "template1"
           dependsOn:

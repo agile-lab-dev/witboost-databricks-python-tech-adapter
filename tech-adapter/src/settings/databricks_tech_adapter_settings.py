@@ -1,3 +1,4 @@
+import os
 from enum import StrEnum
 from typing import List, Optional
 
@@ -17,9 +18,11 @@ class AzureAuthSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="auth_", extra="ignore")
 
-    client_id: str
-    tenant_id: str
-    client_secret: str
+    client_id: str  # = Field(..., alias="AZURE_CLIENT_ID")
+    tenant_id: str  # = Field(..., alias="AZURE_TENANT_ID")
+    client_secret: str  # = Field(..., alias="AZURE_CLIENT_SECRET")
+    subscription_id: str
+
     sku_type: SkuType = SkuType.PREMIUM
 
 
@@ -34,7 +37,6 @@ class AzurePermissionsSettings(BaseSettings):
     auth_client_id: str
     auth_tenant_id: str
     auth_client_secret: str
-    subscription_id: str
     resource_group: str
     dp_owner_role_definition_id: str = ""
     dev_group_role_definition_id: str = ""
@@ -229,6 +231,9 @@ class AppSettings(BaseSettings):
 def load_settings() -> AppSettings:
     """Loads the application settings and returns the populated model."""
     try:
+        os.environ["AZURE__AUTH__CLIENT_ID"] = os.environ["AZURE_CLIENT_ID"]
+        os.environ["AZURE__AUTH__TENANT_ID"] = os.environ["AZURE_TENANT_ID"]
+        os.environ["AZURE__AUTH__CLIENT_SECRET"] = os.environ["AZURE_CLIENT_SECRET"]
         settings = AppSettings()
         logger.info("Application settings loaded successfully.")
         return settings

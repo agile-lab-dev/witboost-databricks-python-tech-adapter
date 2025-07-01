@@ -10,8 +10,7 @@ from starlette.responses import Response
 from src.app_config import app
 from src.check_return_type import check_response
 from src.dependencies import (
-    UnpackedProvisioningRequestDep,
-    UnpackedUnprovisioningRequestDep,
+    ProvisionServiceDep,
     UnpackedUpdateAclRequestDep,
 )
 from src.models.api_models import (
@@ -22,6 +21,7 @@ from src.models.api_models import (
     ValidationResult,
     ValidationStatus,
 )
+from src.service.validation.validation_service import ValidatedDatabricksComponentDep
 
 
 def log_info(req_body, res_code, res_body):
@@ -59,7 +59,7 @@ async def log_request_response_middleware(request: Request, call_next):
     },
     tags=["TechAdapter"],
 )
-def provision(request: UnpackedProvisioningRequestDep) -> Response:
+def provision(request: ValidatedDatabricksComponentDep, provision_service: ProvisionServiceDep) -> Response:
     """
     Deploy a data product or a single component starting from a provisioning descriptor
     """
@@ -67,18 +67,14 @@ def provision(request: UnpackedProvisioningRequestDep) -> Response:
     if isinstance(request, ValidationError):
         return check_response(out_response=request)
 
-    data_product, component_id = request
+    data_product, component, remove_data = request
 
-    logger.info("Provisioning component with id: " + component_id)
+    logger.info("Provisioning component with id: {}", component)
 
-    # todo: define correct response. You can define your pydantic component type with the expected specific schema
-    #  and use `.get_type_component_by_id` to extract it from the data product
+    provisioning_response = provision_service.provision(data_product, component, remove_data)
+    logger.info("Provisioning started. Response: {}", provisioning_response)
 
-    # componentToProvision = data_product.get_typed_component_by_id(component_id, MyTypedComponent)
-
-    resp = SystemErr(error="Response not yet implemented")
-
-    return check_response(out_response=resp)
+    return check_response(out_response=provisioning_response)
 
 
 @app.get(
@@ -91,13 +87,12 @@ def provision(request: UnpackedProvisioningRequestDep) -> Response:
     },
     tags=["TechAdapter"],
 )
-def get_status(token: str) -> Response:
+def get_status(token: str, provision_service: ProvisionServiceDep) -> Response:
     """
     Get the status for a provisioning request
     """
 
-    # todo: define correct response
-    resp = SystemErr(error="Response not yet implemented")
+    resp = provision_service.get_provisioning_status(token)
 
     return check_response(out_response=resp)
 
@@ -113,7 +108,7 @@ def get_status(token: str) -> Response:
     },
     tags=["TechAdapter"],
 )
-def unprovision(request: UnpackedUnprovisioningRequestDep) -> Response:
+def unprovision(request: ValidatedDatabricksComponentDep, provision_service: ProvisionServiceDep) -> Response:
     """
     Undeploy a data product or a single component
     given the provisioning descriptor relative to the latest complete provisioning request
@@ -122,18 +117,14 @@ def unprovision(request: UnpackedUnprovisioningRequestDep) -> Response:
     if isinstance(request, ValidationError):
         return check_response(out_response=request)
 
-    data_product, component_id, remove_data = request
+    data_product, component, remove_data = request
 
-    logger.info("Unprovisioning component with id: " + component_id)
+    logger.info("Unprovisioning component with id: {}", component)
 
-    # todo: define correct response. You can define your pydantic component type with the expected specific schema
-    #  and use `.get_type_component_by_id` to extract it from the data product
+    provisioning_response = provision_service.unprovision(data_product, component, remove_data)
+    logger.info("Unprovisioning started. Response: {}", provisioning_response)
 
-    # componentToUnprovision = data_product.get_typed_component_by_id(component_id, MyTypedComponent)
-
-    resp = SystemErr(error="Response not yet implemented")
-
-    return check_response(out_response=resp)
+    return check_response(out_response=provisioning_response)
 
 
 @app.post(
@@ -147,7 +138,7 @@ def unprovision(request: UnpackedUnprovisioningRequestDep) -> Response:
     },
     tags=["TechAdapter"],
 )
-def updateacl(request: UnpackedUpdateAclRequestDep) -> Response:
+def updateacl(request: UnpackedUpdateAclRequestDep, provision_service: ProvisionServiceDep) -> Response:
     """
     Request the access to a tech adapter component
     """
@@ -173,7 +164,7 @@ def updateacl(request: UnpackedUpdateAclRequestDep) -> Response:
     responses={"200": {"model": ValidationResult}, "500": {"model": SystemErr}},
     tags=["TechAdapter"],
 )
-def validate(request: UnpackedProvisioningRequestDep) -> Response:
+def validate(request: ValidatedDatabricksComponentDep) -> Response:
     """
     Validate a provisioning request
     """
@@ -181,16 +172,7 @@ def validate(request: UnpackedProvisioningRequestDep) -> Response:
     if isinstance(request, ValidationError):
         return check_response(ValidationResult(valid=False, error=request))
 
-    data_product, component_id = request
-
-    # todo: define correct response. You can define your pydantic component type with the expected specific schema
-    #  and use `.get_type_component_by_id` to extract it from the data product
-
-    # componentToProvision = data_product.get_typed_component_by_id(component_id, MyTypedComponent)
-
-    resp = SystemErr(error="Response not yet implemented")
-
-    return check_response(out_response=resp)
+    return check_response(out_response=ValidationResult(valid=True))
 
 
 @app.post(

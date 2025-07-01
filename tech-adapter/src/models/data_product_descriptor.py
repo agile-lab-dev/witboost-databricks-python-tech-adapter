@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, List, Literal, Optional, Type
+from typing import Annotated, Any, List, Literal, Optional, Type
 
 from loguru import logger
 from pydantic import (
@@ -108,7 +108,9 @@ class Component(BaseModel):
     name: str
     fullyQualifiedName: Optional[str] = None
     description: str
-    specific: dict
+    useCaseTemplateId: str
+    infrastructureTemplateId: str
+    specific: Any
 
 
 class OutputPort(Component):
@@ -116,8 +118,7 @@ class OutputPort(Component):
     kind: Literal[ComponentKind.OUTPUTPORT]
 
     version: str
-    infrastructureTemplateId: str
-    useCaseTemplateId: Optional[str] = None
+
     dependsOn: List[str]
     platform: Optional[str] = None
     technology: Optional[str] = None
@@ -148,8 +149,6 @@ class Workload(Component):
     kind: Literal[ComponentKind.WORKLOAD]
 
     version: str
-    infrastructureTemplateId: str
-    useCaseTemplateId: Optional[str] = None
     dependsOn: List[str]
     platform: Optional[str] = None
     technology: Optional[str] = None
@@ -173,8 +172,6 @@ class StorageArea(Component):
     model_config = ConfigDict(extra="allow")
     kind: Literal[ComponentKind.STORAGE]
 
-    infrastructureTemplateId: str
-    useCaseTemplateId: Optional[str] = None
     dependsOn: List[str]
     platform: Optional[str] = None
     technology: Optional[str] = None

@@ -84,5 +84,5 @@ class OutputPortHandler:
                 "An unexpected error occurred while mapping principals for component "
                 f"'{component.name}'. Details: {e}"
             )
-            logger.exception(error_msg)
+            logger.error(error_msg)
             raise ProvisioningError([error_msg]) from e

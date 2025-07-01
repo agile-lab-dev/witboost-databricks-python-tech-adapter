@@ -72,9 +72,10 @@ class TestUnpackProvisioningRequest(unittest.TestCase):
     async def test_successful_unpack(self):
         result = unpack_provisioning_request(self.provisioning_request)
         self.assertIsInstance(result, tuple)
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 3)
         self.assertIsInstance(result[0], DataProduct)
         self.assertEqual(result[1], "id123")
+        self.assertEqual(result[2], False)
 
     async def test_invalid_request(self):
         result = unpack_provisioning_request(self.invalid_provisioning_request)
@@ -95,12 +96,12 @@ app_test = FastAPI()
 
 @app_test.post("/provision")
 async def provision(data: UnpackedProvisioningRequestDep):
-    if isinstance(data, tuple) and len(data) == 2:
-        data_product, component_id = data
+    if isinstance(data, tuple) and len(data) == 3:
+        data_product, component_id, remove_data = data
         return {
-            "message": "Provisioning completed successfully",
             "data_product": data_product,
             "component_id": component_id,
+            "remove_data": remove_data,
         }
     elif isinstance(data, ValidationError):
         return {"message": "Provisioning failed", "errors": data.errors}
@@ -133,9 +134,9 @@ class TestAppDependenciesMock(unittest.TestCase):
         response = client.post("/provision", json=valid_provisioning_request.model_dump())
 
         assert response.status_code == 200
-        assert "Provisioning completed successfully" in response.json()["message"]
         assert "data_product" in response.json()
         assert "component_id" in response.json()
+        assert "remove_data" in response.json()
 
     def test_provision_invalid_request(self):
         invalid_provisioning_request = ProvisioningRequest(

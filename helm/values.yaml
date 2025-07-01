@@ -29,17 +29,17 @@ extraEnvVars:
       secretKeyRef:
         name: databricks-addons-secrets
         key: GIT_TOKEN
-  - name: AZURE__AUTH__TENANT_ID
+  - name: AZURE_TENANT_ID
     valueFrom:
       secretKeyRef:
         name: databricks-addons-secrets
         key: AZURE_TENANT_ID
-  - name: AZURE__AUTH__CLIENT_SECRET
+  - name: AZURE_CLIENT_SECRET
     valueFrom:
       secretKeyRef:
         name: databricks-addons-secrets
         key: AZURE_CLIENT_SECRET
-  - name: AZURE__AUTH__CLIENT_ID
+  - name: AZURE_CLIENT_ID
     valueFrom:
       secretKeyRef:
         name: databricks-addons-secrets

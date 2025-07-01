@@ -1,8 +1,10 @@
 from pathlib import Path
+from unittest.mock import Mock
 
 from fastapi.encoders import jsonable_encoder
 from starlette.testclient import TestClient
 
+from src.dependencies import create_provision_service
 from src.main import app
 from src.models.api_models import (
     DescriptorKind,
@@ -10,8 +12,22 @@ from src.models.api_models import (
     ProvisioningRequest,
     UpdateAclRequest,
 )
+from src.service.provision.provision_service import ProvisionService
 
 client = TestClient(app)
+
+# TODO refine tests
+expected_global_response = "abcdef-1234-abcd"
+
+
+def override_dependency() -> ProvisionService:
+    mock = Mock()
+    mock.provision.return_value = expected_global_response
+    mock.unprovision.return_value = expected_global_response
+    return mock
+
+
+app.dependency_overrides[create_provision_service] = override_dependency
 
 
 def test_provisioning_invalid_descriptor():
@@ -34,8 +50,7 @@ def test_provisioning_valid_descriptor():
 
     resp = client.post("/v1/provision", json=dict(provisioning_request))
 
-    assert resp.status_code == 500
-    assert "Response not yet implemented" in resp.json().get("error")
+    assert resp.status_code == 400
 
 
 def test_unprovisioning_invalid_descriptor():
@@ -58,8 +73,7 @@ def test_unprovisioning_valid_descriptor():
 
     resp = client.post("/v1/unprovision", json=dict(unprovisioning_request))
 
-    assert resp.status_code == 500
-    assert "Response not yet implemented" in resp.json().get("error")
+    assert resp.status_code == 400
 
 
 def test_validate_invalid_descriptor():
@@ -80,8 +94,8 @@ def test_validate_valid_descriptor():
 
     resp = client.post("/v1/validate", json=dict(validate_request))
 
-    assert resp.status_code == 500
-    assert "Response not yet implemented" in resp.json().get("error")
+    assert resp.status_code == 200
+    assert resp.json().get("valid") is False
 
 
 def test_updateacl_invalid_descriptor():
