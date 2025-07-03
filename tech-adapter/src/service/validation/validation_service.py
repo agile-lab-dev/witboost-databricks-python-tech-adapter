@@ -8,7 +8,7 @@ from src import settings
 from src.dependencies import UnpackedProvisioningRequestDep
 from src.models.api_models import ValidationError
 from src.models.data_product_descriptor import Component, ComponentKind, DataProduct
-from src.models.databricks.databricks_models import DatabricksComponent, JobWorkload
+from src.models.databricks.databricks_models import DatabricksComponent, JobWorkload, WorkflowWorkload
 from src.utility.use_case_template_id_utils import get_use_case_template_id
 
 
@@ -16,6 +16,8 @@ def _parse_component(component: Component) -> DatabricksComponent:
     use_case_template_id = get_use_case_template_id(component.useCaseTemplateId)
     if use_case_template_id in settings.usecasetemplateid.workload.job:
         return JobWorkload.parse_obj(component.dict(by_alias=True))
+    elif use_case_template_id in settings.usecasetemplateid.workload.workflow:
+        return WorkflowWorkload.parse_obj(component.dict(by_alias=True))
     else:
         raise NotImplementedError("Other components are not yet supported by this Tech Adapter")  # TODO
 

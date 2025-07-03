@@ -2,7 +2,7 @@
 
 import threading
 from functools import lru_cache
-from typing import Tuple
+from typing import Optional, Tuple
 
 from databricks.sdk import AccountClient, WorkspaceClient
 from databricks.sdk.service.iam import ServicePrincipal
@@ -165,7 +165,7 @@ class WorkspaceManager:
                     f"Error setting Git credentials in workspace '{self.get_workspace_name()}': {e}"
                 ) from e
 
-    def get_service_principal_from_name(self, principal_name: str) -> ServicePrincipal:
+    def get_service_principal_from_name(self, principal_name: str) -> Optional[ServicePrincipal]:
         """
         Retrieves a service principal by its display name from the workspace.
 
@@ -173,10 +173,10 @@ class WorkspaceManager:
             principal_name: The display name of the service principal.
 
         Returns:
-            The found ServicePrincipal object.
+            The found ServicePrincipal object or None if Service Principal doesn't exist
 
         Raises:
-            WorkspaceManagerError: If the principal is not found or an API error occurs.
+            WorkspaceManagerError: If the an API error occurs.
         """
         try:
             workspace_name = self.get_workspace_name()
@@ -191,12 +191,45 @@ class WorkspaceManager:
 
             error_msg = f"No principal named '{principal_name}' found in workspace '{workspace_name}'"
             logger.error(error_msg)
-            raise WorkspaceManagerError(error_msg)
+            return None
         except WorkspaceManagerError:
             raise
         except Exception as e:
             logger.error("Error getting info for service principal '{}'", principal_name)
             raise WorkspaceManagerError(f"Error getting info for service principal '{principal_name}': {e}") from e
+
+    def get_service_principal(self, application_id: str) -> Optional[ServicePrincipal]:
+        """
+        Retrieves a service principal by its display name from the workspace.
+
+        Args:
+            application_id: The display name of the service principal.
+
+        Returns:
+            The found ServicePrincipal object or None if Service Principal doesn't exist
+
+        Raises:
+            WorkspaceManagerError: If an API error occurs.
+        """
+        try:
+            workspace_name = self.get_workspace_name()
+            logger.info("Looking up service principal '{}' in workspace '{}'", application_id, workspace_name)
+
+            principals = self.workspace_client.service_principals.list()
+
+            for sp in principals:
+                if sp.application_id and sp.application_id.strip().lower() == application_id.strip().lower():
+                    logger.info("Found principal with name '{}' for '{}'", sp.display_name, application_id)
+                    return sp
+
+            error_msg = f"No principal with ID '{application_id}' found in workspace '{workspace_name}'"
+            logger.error(error_msg)
+            return None
+        except WorkspaceManagerError:
+            raise
+        except Exception as e:
+            logger.error("Error getting info for service principal '{}': {}", application_id, e)
+            raise WorkspaceManagerError(f"Error getting info for service principal '{application_id}'") from e
 
     def generate_secret_for_service_principal(
         self, service_principal_id: int, lifetime_seconds: int

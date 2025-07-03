@@ -47,3 +47,15 @@ class WorkspaceHandlerError(DatabricksError):
     """Base exception for failures on the WorkspaceHandler class."""
 
     pass
+
+
+class WorkflowManagerError(DatabricksError):
+    """Base exception for any failure during Databricks Workflow management operations."""
+
+    pass
+
+
+class DLTManagerError(DatabricksError):
+    """Base exception for any failure during Databricks DLT management operations."""
+
+    pass

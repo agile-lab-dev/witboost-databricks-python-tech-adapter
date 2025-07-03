@@ -7,13 +7,16 @@ from loguru import logger
 
 from src.models.api_models import Info, ProvisioningStatus, Status1, SystemErr
 from src.models.data_product_descriptor import ComponentKind, DataProduct
-from src.models.databricks.databricks_models import DatabricksComponent, JobWorkload
+from src.models.databricks.databricks_models import DatabricksComponent, JobWorkload, WorkflowWorkload
 from src.models.databricks.databricks_workspace_info import DatabricksWorkspaceInfo
 from src.models.databricks.exceptions import DatabricksError
 from src.models.exceptions import ProvisioningError, build_error_message_from_chained_exception
 from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.databricks.job_manager import JobManager
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
+from src.service.provision.handler.workflow_workload_handler import WorkflowWorkloadHandler
 from src.service.provision.task_repository import MemoryTaskRepository
+from src.service.validation.workflow_validation_service import validate_workflow_for_provisioning
 
 
 class ProvisionService:
@@ -21,11 +24,13 @@ class ProvisionService:
         self,
         workspace_handler: WorkspaceHandler,
         job_workload_handler: JobWorkloadHandler,
+        workflow_workload_handler: WorkflowWorkloadHandler,
         task_repository: MemoryTaskRepository,
         background_tasks: BackgroundTasks,
     ):
         self.workspace_handler = workspace_handler
         self.job_workload_handler = job_workload_handler
+        self.workflow_workload_handler = workflow_workload_handler
         self.task_repository = task_repository
         self.background_tasks = background_tasks
 
@@ -116,16 +121,20 @@ class ProvisionService:
         remove_data: bool,
         is_provisioning: bool,
     ) -> None:
+        result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
         if is_provisioning:
             workspace_info = self.workspace_handler.provision_workspace(data_product, component)
             self._raise_if_workspace_not_ready(workspace_info)
             workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
+
             if isinstance(component, JobWorkload):
                 result = self._provision_job(data_product, component, workspace_info, workspace_client)
-                self.task_repository.update_task(
-                    id=task_id, status=result.status, info=result.info, result=result.result
-                )
                 logger.success("Job provisioning successful with resulting Provisioning Status {}", result)
+            elif isinstance(component, WorkflowWorkload):
+                result = self._provision_workflow(data_product, component, workspace_info, workspace_client)
+                logger.success("Workflow provisioning successful with resulting Provisioning Status {}", result)
+
+            self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
         else:
             existing_workspace_info = self.workspace_handler.get_workspace_info(component)
             if not existing_workspace_info:
@@ -138,14 +147,19 @@ class ProvisionService:
                 return
             self._raise_if_workspace_not_ready(existing_workspace_info)
             workspace_client = self.workspace_handler.get_workspace_client(existing_workspace_info)
+
             if isinstance(component, JobWorkload):
                 result = self._unprovision_job(
                     data_product, component, remove_data, existing_workspace_info, workspace_client
                 )
-                self.task_repository.update_task(
-                    id=task_id, status=result.status, info=result.info, result=result.result
-                )
                 logger.success("Job unprovisioning successful with resulting Provisioning Status {}", result)
+            elif isinstance(component, WorkflowWorkload):
+                result = self._unprovision_workflow(
+                    data_product, component, remove_data, existing_workspace_info, workspace_client
+                )
+                logger.success("Workflow unprovisioning successful with resulting Provisioning Status {}", result)
+
+            self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
 
     def _handle_output_port(
         self,
@@ -195,6 +209,45 @@ class ProvisionService:
         workspace_client: WorkspaceClient,
     ) -> ProvisioningStatus:
         self.job_workload_handler.unprovision_workload(
+            data_product, component, remove_data, workspace_client, workspace_info
+        )
+        return ProvisioningStatus(status=Status1.COMPLETED, result="")
+
+    def _provision_workflow(
+        self,
+        data_product: DataProduct,
+        component: WorkflowWorkload,
+        workspace_info: DatabricksWorkspaceInfo,
+        workspace_client: WorkspaceClient,
+    ) -> ProvisioningStatus:
+        job_manager = JobManager(workspace_client, workspace_info.name)
+        validate_workflow_for_provisioning(
+            job_manager, workspace_client, component, data_product.environment, workspace_info
+        )
+        workflow_id = self.workflow_workload_handler.provision_workflow(
+            data_product, component, workspace_client, workspace_info
+        )
+        wf_url = f"https://{workspace_info.databricks_host}/jobs/{workflow_id}"
+        info = {
+            "workspaceURL": {
+                "type": "string",
+                "label": "Databricks Workspace URL",
+                "value": "Open Azure Databricks Workspace",
+                "href": workspace_info.azure_resource_url,
+            },
+            "jobURL": {"type": "string", "label": "Job URL", "value": "Open job details in Databricks", "href": wf_url},
+        }
+        return ProvisioningStatus(status=Status1.COMPLETED, result="", info=Info(publicInfo=info, privateInfo=info))
+
+    def _unprovision_workflow(
+        self,
+        data_product: DataProduct,
+        component: WorkflowWorkload,
+        remove_data: bool,
+        workspace_info: DatabricksWorkspaceInfo,
+        workspace_client: WorkspaceClient,
+    ) -> ProvisioningStatus:
+        self.workflow_workload_handler.unprovision_workload(
             data_product, component, remove_data, workspace_client, workspace_info
         )
         return ProvisioningStatus(status=Status1.COMPLETED, result="")

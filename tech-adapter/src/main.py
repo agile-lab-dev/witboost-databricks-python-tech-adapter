@@ -11,10 +11,14 @@ from src.app_config import app
 from src.check_return_type import check_response
 from src.dependencies import (
     ProvisionServiceDep,
+    ReverseProvisionServiceDep,
     UnpackedUpdateAclRequestDep,
 )
 from src.models.api_models import (
     ProvisioningStatus,
+    RequestValidationError,
+    ReverseProvisioningRequest,
+    ReverseProvisioningStatus,
     SystemErr,
     ValidationError,
     ValidationRequest,
@@ -219,6 +223,50 @@ def get_validation_status(
     Get the status for a provisioning request
     """
 
+    # todo: define correct response
+    resp = SystemErr(error="Response not yet implemented")
+
+    return check_response(out_response=resp)
+
+
+@app.post(
+    "/v1/reverse-provisioning",
+    response_model=None,
+    responses={
+        "200": {"model": ReverseProvisioningStatus},
+        "202": {"model": str},
+        "400": {"model": RequestValidationError},
+        "500": {"model": SystemErr},
+    },
+    tags=["SpecificProvisioner"],
+)
+def run_reverse_provisioning(
+    body: ReverseProvisioningRequest, reverse_provision_service: ReverseProvisionServiceDep
+) -> Response:
+    """
+    Execute a reverse provisioning operation
+    """
+    resp = reverse_provision_service.run_reverse_provisioning(body)
+
+    return check_response(out_response=resp)
+
+
+@app.get(
+    "/v1/reverse-provisioning/{token}/status",
+    response_model=None,
+    responses={
+        "200": {"model": ReverseProvisioningStatus},
+        "400": {"model": RequestValidationError},
+        "500": {"model": SystemErr},
+    },
+    tags=["SpecificProvisioner"],
+)
+def get_reverse_provisioning_status(
+    token: str,
+) -> Response:
+    """
+    Get status and results of a reverse provisioning operation
+    """
     # todo: define correct response
     resp = SystemErr(error="Response not yet implemented")
 

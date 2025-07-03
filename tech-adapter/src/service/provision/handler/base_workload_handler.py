@@ -301,7 +301,7 @@ class BaseWorkloadHandler:
             )
 
             principal = workspace_manager.get_service_principal_from_name(principal_name)
-            if not principal.id or not principal.application_id:
+            if not principal or not principal.id or not principal.application_id:
                 error_msg = f"Cannot find service principal information for {principal_name}"
                 logger.error(error_msg)
                 raise ProvisioningError([error_msg])

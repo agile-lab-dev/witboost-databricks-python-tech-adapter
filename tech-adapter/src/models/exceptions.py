@@ -22,6 +22,23 @@ class AsyncHandlingError(ProvisioningError):
     pass
 
 
+class ReverseProvisioningError(Exception):
+    """
+    Raised for any failure during the reverse provisioning process for a workflow.
+    """
+
+    pass
+
+
+def get_error_list_from_chained_exception(e: BaseException) -> list[str]:
+    ex = e
+    result = [str(e)]
+    while ex.__context__:
+        result.append(str(ex.__context__))
+        ex = ex.__context__
+    return result
+
+
 def build_error_message_from_chained_exception(e: BaseException) -> str:
     ex = e
     result = f"{e}"

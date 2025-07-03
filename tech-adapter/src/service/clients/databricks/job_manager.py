@@ -80,7 +80,7 @@ class JobManager:
                 f"Error updating job '{job_name}' in {self.workspace_name}. " f"Received empty response from Databricks"
             )
             logger.error(error_msg)
-            logger.debug(existing_jobs[0])
+            logger.debug("Response returned by Databricks for '{}': {}", job_name, existing_jobs[0])
             raise JobManagerError(error_msg)
 
         return self._update_job_with_new_cluster(
@@ -124,7 +124,7 @@ class JobManager:
                     f"Received empty response from Databricks"
                 )
                 logger.error(error_msg)
-                logger.debug(response)
+                logger.debug("Response returned by Databricks for '{}': {}", job_name, response)
                 raise JobManagerError(error_msg)
 
             logger.info(

@@ -176,6 +176,13 @@ class JobWorkloadHandler(BaseWorkloadHandler):
             if run_as_principal_name and run_as_principal_name.strip():
                 workspace_manager = WorkspaceManager(workspace_client, self.account_client)
                 run_as_principal = workspace_manager.get_service_principal_from_name(run_as_principal_name)
+                if not run_as_principal:
+                    error_msg = (
+                        f"Cannot set service principal '{run_as_principal_name}' as Run As. "
+                        f"Service principal not found in workspace '{workspace_name}'"
+                    )
+                    logger.error(error_msg)
+                    raise ProvisioningError([error_msg])
                 run_as_app_id = run_as_principal.application_id
 
             return job_manager.create_or_update_job_with_new_cluster(

@@ -12,7 +12,6 @@ from src.models.data_product_descriptor import DataProduct
 from src.models.databricks.databricks_models import DatabricksComponent
 from src.models.databricks.databricks_workspace_info import DatabricksWorkspaceInfo
 from src.models.databricks.exceptions import WorkspaceHandlerError
-from src.models.databricks.workload.databricks_workload_specific import DatabricksJobWorkloadSpecific
 from src.service.clients.azure.azure_workspace_manager import AzureWorkspaceManager
 from src.settings.databricks_tech_adapter_settings import AzureAuthSettings, DatabricksAuthSettings
 
@@ -146,14 +145,14 @@ class WorkspaceHandler:
             WorkspaceHandlerError: If the lookup process fails.
         """
         try:
-            workspace_identifier = self.get_workspace_name(component)
-            return self._get_workspace_info(workspace_identifier)
+            workspace_identifier = component.specific.workspace
+            return self.get_workspace_info_by_name(workspace_identifier)
         except WorkspaceHandlerError as e:
             error_msg = f"Could not determine workspace for component '{component.name}'"
             logger.error(error_msg)
             raise WorkspaceHandlerError(error_msg) from e
 
-    def _get_workspace_info(self, workspace_identifier: str) -> Optional[DatabricksWorkspaceInfo]:
+    def get_workspace_info_by_name(self, workspace_identifier: str) -> Optional[DatabricksWorkspaceInfo]:
         """
         Returns information for a Databricks Workspace from its name or URL.
 
@@ -216,36 +215,3 @@ class WorkspaceHandler:
             error_msg = f"Failed to create Databricks workspace client for '{databricks_workspace_info.name}'"
             logger.error(error_msg)
             raise WorkspaceHandlerError(error_msg) from e
-
-    def get_workspace_name(self, component: DatabricksComponent) -> str:
-        """
-        Extracts the workspace name from the specific section of a component.
-
-        Args:
-            component: The component definition.
-
-        Returns:
-            The workspace name as a string.
-
-        Raises:
-            WorkspaceHandlerError: If the specific section is of an invalid type or
-                                the workspace name is missing.
-        """
-        specific = component.specific
-        workspace_name = None
-
-        if isinstance(specific, DatabricksJobWorkloadSpecific):
-            workspace_name = specific.workspace
-        # TODO Add other specific instances
-        else:
-            error_msg = f"Component '{component.name}' has an invalid specific type. "
-            "Expected either a Job, a Pipeline, a Workflow or an Output Port valid specific"
-            logger.error(error_msg)
-            raise WorkspaceHandlerError(error_msg)
-
-        if not workspace_name:
-            error_msg = f"The specific section of component '{component.name}' is missing a workspace name."
-            logger.error(error_msg)
-            raise WorkspaceHandlerError(error_msg)
-
-        return workspace_name

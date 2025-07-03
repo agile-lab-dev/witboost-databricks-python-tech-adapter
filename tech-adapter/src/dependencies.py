@@ -17,12 +17,15 @@ from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
 from src.service.clients.azure.azure_workspace_manager import AzureWorkspaceManager
 from src.service.clients.databricks.account_client import get_account_client
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
+from src.service.provision.handler.workflow_workload_handler import WorkflowWorkloadHandler
 from src.service.provision.provision_service import ProvisionService
 from src.service.provision.task_repository import MemoryTaskRepository, get_task_repository
+from src.service.reverse_provision.reverse_provision_service import ReverseProvisionService
+from src.service.reverse_provision.workflow_reverse_provision_handler import WorkflowReverseProvisionHandler
 from src.utility.parsing_pydantic_models import parse_yaml_with_model
 
 
-async def unpack_provisioning_request(
+def unpack_provisioning_request(
     provisioning_request: ProvisioningRequest,
 ) -> Tuple[DataProduct, str, bool] | ValidationError:
     """
@@ -83,7 +86,7 @@ UnpackedProvisioningRequestDep = Annotated[
 ]
 
 
-async def unpack_update_acl_request(
+def unpack_update_acl_request(
     update_acl_request: UpdateAclRequest,
 ) -> Tuple[DataProduct, str, list[str]] | ValidationError:
     """
@@ -135,7 +138,7 @@ UnpackedUpdateAclRequestDep = Annotated[
 ]
 
 
-async def create_provision_service(
+def create_provision_service(
     background_tasks: BackgroundTasks, task_repository: Annotated[MemoryTaskRepository, Depends(get_task_repository)]
 ) -> ProvisionService:
     account_client = get_account_client(settings)
@@ -147,7 +150,28 @@ async def create_provision_service(
     )
     workspace_handler = WorkspaceHandler(azure_workspace_manager)
 
-    return ProvisionService(workspace_handler, JobWorkloadHandler(account_client), task_repository, background_tasks)
+    return ProvisionService(
+        workspace_handler,
+        JobWorkloadHandler(account_client),
+        WorkflowWorkloadHandler(account_client),
+        task_repository,
+        background_tasks,
+    )
 
 
 ProvisionServiceDep = Annotated[ProvisionService, Depends(create_provision_service)]
+
+
+def create_reverse_provision_service() -> ReverseProvisionService:
+    account_client = get_account_client(settings)
+    azure_workspace_manager = AzureWorkspaceManager(
+        AzureDatabricksManagementClient(
+            credential=DefaultAzureCredential(),  # type:ignore[arg-type]
+            subscription_id=settings.azure.auth.subscription_id,
+        )
+    )
+    workspace_handler = WorkspaceHandler(azure_workspace_manager)
+    return ReverseProvisionService(WorkflowReverseProvisionHandler(account_client, workspace_handler))
+
+
+ReverseProvisionServiceDep = Annotated[ReverseProvisionService, Depends(create_reverse_provision_service)]

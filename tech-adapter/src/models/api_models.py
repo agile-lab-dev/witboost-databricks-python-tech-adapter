@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum, StrEnum
 from typing import Any, Dict, List, Optional
 
@@ -38,6 +39,20 @@ class Status1(Enum):
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
+
+class Level(Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+
+
+class Log(BaseModel):
+    timestamp: datetime
+    level: Level = Field(..., description="This is the severity level of the log")
+    message: str
+    phase: Optional[str] = None
 
 
 class ValidationError(BaseModel):
@@ -91,13 +106,13 @@ class ReverseProvisioningRequest(BaseModel):
         examples=["urn:dmb:utm:op-standard:0.0.0"],
     )
     environment: str = Field(..., description="Target environment", examples=["production"])
-    params: Optional[Dict] = Field(
-        default=None,
+    params: Dict = Field(
+        ...,
         description="Reverse provisioning input params",
         examples=[{"inputA": "value A", "inputB": 1}],
     )
-    catalogInfo: Optional[Dict] = Field(
-        default=None,
+    catalogInfo: Dict = Field(
+        ...,
         description="Content of the current `catalog-info.yaml` of the component",
     )
 
@@ -153,6 +168,7 @@ class ReverseProvisioningStatus(BaseModel):
             }
         ],
     )
+    logs: Optional[List[Log]] = None
 
 
 class ValidationResult(BaseModel):
