@@ -66,7 +66,10 @@ class testApp(unittest.TestCase):
     def test_fun1_valid_input_500(self):
         response = client.post("/v1/test", json={"val": 3})
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.json(), {"error": "error"})
+        self.assertEqual(
+            response.json(),
+            {"error": "error", "userMessage": None, "input": None, "inputErrorField": None, "moreInfo": None},
+        )
 
     def test_fun1_invalid_input_500(self):
         response = client.post("/v1/test", json={"val": 4})
@@ -75,7 +78,11 @@ class testApp(unittest.TestCase):
             response.json(),
             {
                 "error": "An unexpected error occurred while processing the request. "
-                "If the issue still persists, contact the platform team for assistance!"
+                "If the issue still persists, contact the platform team for assistance!",
+                "userMessage": None,
+                "input": None,
+                "inputErrorField": None,
+                "moreInfo": None,
             },
         )  # noqa: E501
 

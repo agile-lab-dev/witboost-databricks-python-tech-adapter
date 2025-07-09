@@ -21,68 +21,18 @@ dataProduct:
   useCaseTemplateId: urn:dmb:utm:dataproduct-template:0.0.0
   infrastructureTemplateId: urn:dmb:itm:dataproduct-provisioner:1
   components:
-    - kind: storage
-      id: urn:dmb:cmp:healthcare:vaccinations:0:snowflake-storage
-      description: Snowflake Storage
-      name: Snowflake Storage
-      fullyQualifiedName: Snowflake Storage
-      version: 0.0.0
-      infrastructureTemplateId: urn:dmb:itm:snowflake-storage-provisioner:0
-      useCaseTemplateId: urn:dmb:utm:snowflake-storage-template:0.0.0
-      dependsOn: [ ]
-      platform: Snowflake
-      technology: Snowflake
-      StorageType: Database
-      tags: [ ]
-      specific:
-        database: HEALTHCARE
-        schema: TESTVACCINATIONSNICO_0
-        tables:
-          - tableName: vaccinations_clean
-            schema:
-              - name: date
-                dataType: DATE
-                constraint: PRIMARY_KEY
-              - name: location_key
-                dataType: TEXT
-                constraint: PRIMARY_KEY
-                dataLength: 16777216
-              - name: new_persons_vaccinated
-                dataType: NUMBER
-                precision: 38
-                scale: 0
-              - name: new_persons_fully_vaccinated
-                dataType: NUMBER
-                precision: 38
-                scale: 0
-              - name: new_vaccine_doses_administered
-                dataType: NUMBER
-                precision: 38
-                scale: 0
-              - name: cumulative_persons_vaccinated
-                dataType: NUMBER
-                precision: 38
-                scale: 0
-              - name: cumulative_persons_fully_vaccinated
-                dataType: NUMBER
-                precision: 38
-                scale: 0
-              - name: cumulative_vaccine_doses_administered
-                dataType: NUMBER
-                precision: 38
-                scale: 0
     - kind: outputport
-      id: urn:dmb:cmp:healthcare:vaccinations:0:snowflake-output-port
+      id: urn:dmb:cmp:healthcare:vaccinations:0:databricks-output-port
       description: Example data product for the Vaccinations use case
       name: Snowflake Output Port
       fullyQualifiedName: Snowflake Output Port
       version: 0.0.0
-      infrastructureTemplateId: urn:dmb:itm:snowflake-outputport-provisioner:0
-      useCaseTemplateId: urn:dmb:utm:snowflake-outputport-template:0.0.0
+      infrastructureTemplateId: urn:dmb:itm:databricks-outputport-provisioner:0
+      useCaseTemplateId: urn:dmb:utm:databricks-outputport-template:0.0.0
       dependsOn:
-        - urn:dmb:cmp:healthcare:vaccinations:0:snowflake-storage
-      platform: Snowflake
-      technology: Snowflake
+        - urn:dmb:cmp:healthcare:vaccinations:0:databricks-storage
+      platform: Azure
+      technology: Databricks
       outputPortType: SQL
       creationDate: 2023-12-04T11:38:05.500Z
       startDate: 2023-12-04T11:38:05.500Z
@@ -133,10 +83,15 @@ dataProduct:
       sampleData: { }
       semanticLinking: [ ]
       specific:
-        viewName: vaccinations_view
-        tableName: vaccinations_clean
-        database: HEALTHCARE
-        schema: TESTVACCINATIONSNICO_0
+        workspace: adb-123456789012.0.azuredatabricks.net
+        workspaceOP: adb-123456789012.0.azuredatabricks.net
+        catalogName: test-catalog
+        schemaName: test-schema
+        tableName: source_table
+        catalogNameOP: databricks-catalog
+        schemaNameOP: databricks-output-port
+        viewNameOP: target_view
+        sqlWarehouseName: Serverless Starter Warehouse
       dataSharingAgreement:
         purpose: Foundational data for downstream use cases.
         billing: None.
@@ -146,4 +101,4 @@ dataProduct:
           analytical use cases.
         lifeCycle: Data loaded every two days and typically never deleted.
         confidentiality: None.
-componentIdToProvision: urn:dmb:cmp:healthcare:vaccinations:0:snowflake-output-port
+componentIdToProvision: urn:dmb:cmp:healthcare:vaccinations:0:databricks-output-port

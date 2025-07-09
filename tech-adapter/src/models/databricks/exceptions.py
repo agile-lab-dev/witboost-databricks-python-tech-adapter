@@ -59,3 +59,19 @@ class DLTManagerError(DatabricksError):
     """Base exception for any failure during Databricks DLT management operations."""
 
     pass
+
+
+class UnityCatalogError(DatabricksError):
+    """
+    Base exception for any failure during operations related to the Unity Catalog
+    """
+
+    pass
+
+
+class StatementExecutionError(DatabricksError):
+    """
+    Base exception for any failures during the execution of SQL statements
+    """
+
+    pass

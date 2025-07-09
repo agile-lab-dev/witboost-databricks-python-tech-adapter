@@ -12,7 +12,7 @@ from src.check_return_type import check_response
 from src.dependencies import (
     ProvisionServiceDep,
     ReverseProvisionServiceDep,
-    UnpackedUpdateAclRequestDep,
+    UpdateAclServiceDep,
 )
 from src.models.api_models import (
     ProvisioningStatus,
@@ -25,7 +25,10 @@ from src.models.api_models import (
     ValidationResult,
     ValidationStatus,
 )
-from src.service.validation.validation_service import ValidatedDatabricksComponentDep
+from src.service.validation.validation_service import (
+    ValidatedDatabricksComponentDep,
+    ValidatedUpdateACLDatabricksComponentDep,
+)
 
 
 def log_info(req_body, res_code, res_body):
@@ -58,7 +61,7 @@ async def log_request_response_middleware(request: Request, call_next):
     responses={
         "200": {"model": ProvisioningStatus},
         "202": {"model": str},
-        "400": {"model": ValidationError},
+        "400": {"model": RequestValidationError},
         "500": {"model": SystemErr},
     },
     tags=["TechAdapter"],
@@ -68,7 +71,7 @@ def provision(request: ValidatedDatabricksComponentDep, provision_service: Provi
     Deploy a data product or a single component starting from a provisioning descriptor
     """
 
-    if isinstance(request, ValidationError):
+    if isinstance(request, RequestValidationError):
         return check_response(out_response=request)
 
     data_product, component, remove_data = request
@@ -86,7 +89,7 @@ def provision(request: ValidatedDatabricksComponentDep, provision_service: Provi
     response_model=None,
     responses={
         "200": {"model": ProvisioningStatus},
-        "400": {"model": ValidationError},
+        "400": {"model": RequestValidationError},
         "500": {"model": SystemErr},
     },
     tags=["TechAdapter"],
@@ -107,7 +110,7 @@ def get_status(token: str, provision_service: ProvisionServiceDep) -> Response:
     responses={
         "200": {"model": ProvisioningStatus},
         "202": {"model": str},
-        "400": {"model": ValidationError},
+        "400": {"model": RequestValidationError},
         "500": {"model": SystemErr},
     },
     tags=["TechAdapter"],
@@ -118,7 +121,7 @@ def unprovision(request: ValidatedDatabricksComponentDep, provision_service: Pro
     given the provisioning descriptor relative to the latest complete provisioning request
     """  # noqa: E501
 
-    if isinstance(request, ValidationError):
+    if isinstance(request, RequestValidationError):
         return check_response(out_response=request)
 
     data_product, component, remove_data = request
@@ -137,27 +140,22 @@ def unprovision(request: ValidatedDatabricksComponentDep, provision_service: Pro
     responses={
         "200": {"model": ProvisioningStatus},
         "202": {"model": str},
-        "400": {"model": ValidationError},
+        "400": {"model": RequestValidationError},
         "500": {"model": SystemErr},
     },
     tags=["TechAdapter"],
 )
-def updateacl(request: UnpackedUpdateAclRequestDep, provision_service: ProvisionServiceDep) -> Response:
+def updateacl(request: ValidatedUpdateACLDatabricksComponentDep, update_acl_service: UpdateAclServiceDep) -> Response:
     """
     Request the access to a tech adapter component
     """
 
-    if isinstance(request, ValidationError):
+    if isinstance(request, RequestValidationError):
         return check_response(out_response=request)
 
-    data_product, component_id, witboost_users = request
+    data_product, component, witboost_users = request
 
-    # todo: define correct response. You can define your pydantic component type with the expected specific schema
-    #  and use `.get_type_component_by_id` to extract it from the data product
-
-    # componentToProvision = data_product.get_typed_component_by_id(component_id, MyTypedComponent)
-
-    resp = SystemErr(error="Response not yet implemented")
+    resp = update_acl_service.update_acl(data_product, component, witboost_users)
 
     return check_response(out_response=resp)
 
@@ -173,8 +171,8 @@ def validate(request: ValidatedDatabricksComponentDep) -> Response:
     Validate a provisioning request
     """
 
-    if isinstance(request, ValidationError):
-        return check_response(ValidationResult(valid=False, error=request))
+    if isinstance(request, RequestValidationError):
+        return check_response(ValidationResult(valid=False, error=ValidationError(errors=request.errors)))
 
     return check_response(out_response=ValidationResult(valid=True))
 

@@ -69,7 +69,7 @@ class WorkflowReverseProvisionHandler:
                     "Error, received empty specific workflow.settings.name. " "Name is required to manage the workload"
                 )
                 logger.error(error_msg)
-                raise ReverseProvisioningError(error_msg)
+                raise ReverseProvisioningError([error_msg])
             workflow_name = env_config.workflow.settings.name
 
             # 3. Get workspace client and validate the request
@@ -77,7 +77,7 @@ class WorkflowReverseProvisionHandler:
             if not workspace_info:
                 error_msg = f"Validation failed. Workspace '{workspace_name}' not found."
                 logger.error(error_msg)
-                raise ReverseProvisioningError(error_msg)
+                raise ReverseProvisioningError([error_msg])
 
             workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
             workflow_id = self._validate_provision_request(workspace_client, workspace_info, workflow_name)
@@ -116,7 +116,7 @@ class WorkflowReverseProvisionHandler:
                             f"'{input_run_as}' "
                         )
                         logger.error(error_msg)
-                        raise ReverseProvisioningError(error_msg)
+                        raise ReverseProvisioningError([error_msg])
                 else:
                     error_msg = (
                         f"Run As Service Principal '{run_as_name}' doesn't exist on target workspace. "
@@ -125,7 +125,7 @@ class WorkflowReverseProvisionHandler:
                         f"the Run As with the appropriate Service Principal"
                     )
                     logger.error(error_msg)
-                    raise ReverseProvisioningError(error_msg)
+                    raise ReverseProvisioningError([error_msg])
             # 7. Prepare and return the final updates
             updates = self._prepare_updates(workflow, workflow_tasks_info_list)
             logger.info("({}) Reverse Provision updates are ready: {}", component_name, updates)
@@ -136,7 +136,7 @@ class WorkflowReverseProvisionHandler:
         except Exception as e:
             error_msg = f"An unexpected error occurred during reverse provisioning: {e}"
             logger.error(error_msg)
-            raise ReverseProvisioningError(error_msg) from e
+            raise ReverseProvisioningError([error_msg]) from e
 
     def _validate_provision_request(
         self,
@@ -154,12 +154,12 @@ class WorkflowReverseProvisionHandler:
             if not workflow_list:
                 error_msg = f"Workflow {workflow_name} not found in {workspace_info.name}"
                 logger.error(error_msg)
-                raise ReverseProvisioningError(error_msg)
+                raise ReverseProvisioningError([error_msg])
 
             if len(workflow_list) > 1:
                 error_msg = f"Workflow {workflow_name} is not unique in {workspace_info.name}."
                 logger.error(error_msg)
-                raise ReverseProvisioningError(error_msg)
+                raise ReverseProvisioningError([error_msg])
 
             if not workflow_list[0].job_id:
                 error_msg = (
@@ -168,13 +168,13 @@ class WorkflowReverseProvisionHandler:
                 )
                 logger.error(error_msg)
                 logger.debug("Response returned by Databricks for '{}': {}", workflow_name, workflow_list[0])
-                raise ReverseProvisioningError(error_msg)
+                raise ReverseProvisioningError([error_msg])
 
             return workflow_list[0].job_id
         except Exception as e:
             error_msg = f"Failed to list jobs named '{workflow_name}' in workspace '{workspace_info.name}'"
             logger.error(error_msg)
-            raise ReverseProvisioningError(error_msg) from e
+            raise ReverseProvisioningError([error_msg]) from e
 
     def _prepare_updates(self, workflow: Job, workflow_tasks_info_list: List[WorkflowTasksInfo]) -> Dict[str, Any]:
         """

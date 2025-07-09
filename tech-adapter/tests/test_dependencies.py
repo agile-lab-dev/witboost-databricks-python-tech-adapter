@@ -14,8 +14,8 @@ from src.dependencies import (
 from src.models.api_models import (
     ProvisionInfo,
     ProvisioningRequest,
+    RequestValidationError,
     UpdateAclRequest,
-    ValidationError,
 )
 from src.models.data_product_descriptor import DataProduct
 
@@ -45,7 +45,7 @@ class TestUnpackUpdateAclRequest(unittest.TestCase):
 
         # Call the function and assert the result
         result = unpack_update_acl_request(update_acl_request)
-        self.assertIsInstance(result, ValidationError)
+        self.assertIsInstance(result, RequestValidationError)
         self.assertIn("Unable to parse the descriptor.", result.errors[0])
 
     async def test_exception_handling(self):
@@ -53,7 +53,7 @@ class TestUnpackUpdateAclRequest(unittest.TestCase):
         update_acl_request.provisionInfo.request = "{}"
 
         result = unpack_update_acl_request(update_acl_request)
-        self.assertIsInstance(result, ValidationError)
+        self.assertIsInstance(result, RequestValidationError)
 
 
 class TestUnpackProvisioningRequest(unittest.TestCase):
@@ -79,7 +79,7 @@ class TestUnpackProvisioningRequest(unittest.TestCase):
 
     async def test_invalid_request(self):
         result = unpack_provisioning_request(self.invalid_provisioning_request)
-        self.assertIsInstance(result, ValidationError)
+        self.assertIsInstance(result, RequestValidationError)
         self.assertIn("An error occurred parsing the yaml data with", result.errors[0])
 
     async def test_exception_handling(self):
@@ -88,7 +88,7 @@ class TestUnpackProvisioningRequest(unittest.TestCase):
         provisioning_request.descriptor = "Invalid JSON"
 
         result = unpack_provisioning_request(provisioning_request)
-        self.assertIsInstance(result, ValidationError)
+        self.assertIsInstance(result, RequestValidationError)
 
 
 app_test = FastAPI()
@@ -103,7 +103,7 @@ async def provision(data: UnpackedProvisioningRequestDep):
             "component_id": component_id,
             "remove_data": remove_data,
         }
-    elif isinstance(data, ValidationError):
+    elif isinstance(data, RequestValidationError):
         return {"message": "Provisioning failed", "errors": data.errors}
 
 
@@ -116,7 +116,7 @@ async def update_acl(data: UnpackedUpdateAclRequestDep):
             "data_product": data_product,
             "component_id": component_id,
         }
-    elif isinstance(data, ValidationError):
+    elif isinstance(data, RequestValidationError):
         return {"message": "Provisioning failed", "errors": data.errors}
 
 

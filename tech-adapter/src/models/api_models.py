@@ -97,6 +97,16 @@ class ProvisionInfo(BaseModel):
 
 class SystemErr(BaseModel):
     error: str
+    userMessage: Optional[str] = Field(None, description="User-readable message to be displayed")
+    input: Optional[str] = Field(
+        None,
+        description="Optional field to include the file or descriptor that raised the error",
+    )
+    inputErrorField: Optional[str] = Field(
+        None,
+        description="Optional field to include the field path (in dot format) that raised the error",
+    )
+    moreInfo: Optional[ErrorMoreInfo] = None
 
 
 class ReverseProvisioningRequest(BaseModel):

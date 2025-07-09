@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from src.models.api_models import ValidationError
+from src.models.api_models import RequestValidationError
 from src.models.data_product_descriptor import DataProduct
 from src.utility.parsing_pydantic_models import parse_yaml_with_model
 
@@ -64,7 +64,7 @@ class TestParseYAMLWithModel(unittest.TestCase):
         # The age key is missing
 
         result_a_invalid = parse_yaml_with_model(yaml_data_a_invalid, ModelA)
-        self.assertIsInstance(result_a_invalid, ValidationError)
+        self.assertIsInstance(result_a_invalid, RequestValidationError)
 
         # Test an error case with ModelB
         yaml_data_b_invalid = """
@@ -73,7 +73,7 @@ class TestParseYAMLWithModel(unittest.TestCase):
         # The "description" key is missing
 
         result_b_invalid = parse_yaml_with_model(yaml_data_b_invalid, ModelB)
-        self.assertIsInstance(result_b_invalid, ValidationError)
+        self.assertIsInstance(result_b_invalid, RequestValidationError)
 
         # Test an error case with SubModelB
         yaml_data_sub_b_invalid = """
@@ -81,13 +81,13 @@ class TestParseYAMLWithModel(unittest.TestCase):
         description: This is a subclass example
         """
         result_sub_b_invalid = parse_yaml_with_model(yaml_data_sub_b_invalid, SubModelB)
-        self.assertIsInstance(result_sub_b_invalid, ValidationError)
+        self.assertIsInstance(result_sub_b_invalid, RequestValidationError)
 
 
 def test_parse_valid_data_product_yaml():
     descriptor_str = Path("tests/descriptors/data_product_valid.yaml").read_text()
     result = parse_yaml_with_model(descriptor_str, DataProduct)
-    assert not isinstance(result, ValidationError)
+    assert not isinstance(result, RequestValidationError)
     assert isinstance(result, DataProduct)
 
 
@@ -97,4 +97,4 @@ def test_parse_invalid_data_product_yaml():
     invalid_yaml_data = descriptor_str.replace("name: Vaccinations", "invalid_field: Invalid Value")
 
     result = parse_yaml_with_model(invalid_yaml_data, DataProduct)
-    assert isinstance(result, ValidationError)
+    assert isinstance(result, RequestValidationError)

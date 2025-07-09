@@ -7,15 +7,22 @@ from loguru import logger
 
 from src.models.api_models import Info, ProvisioningStatus, Status1, SystemErr
 from src.models.data_product_descriptor import ComponentKind, DataProduct
-from src.models.databricks.databricks_models import DatabricksComponent, JobWorkload, WorkflowWorkload
+from src.models.databricks.databricks_models import (
+    DatabricksComponent,
+    DatabricksOutputPort,
+    JobWorkload,
+    WorkflowWorkload,
+)
 from src.models.databricks.databricks_workspace_info import DatabricksWorkspaceInfo
 from src.models.databricks.exceptions import DatabricksError
 from src.models.exceptions import ProvisioningError, build_error_message_from_chained_exception
 from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
 from src.service.clients.databricks.job_manager import JobManager
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
+from src.service.provision.handler.output_port_handler import OutputPortHandler
 from src.service.provision.handler.workflow_workload_handler import WorkflowWorkloadHandler
 from src.service.provision.task_repository import MemoryTaskRepository
+from src.service.validation.output_port_validation_service import OutputPortValidation
 from src.service.validation.workflow_validation_service import validate_workflow_for_provisioning
 
 
@@ -25,12 +32,14 @@ class ProvisionService:
         workspace_handler: WorkspaceHandler,
         job_workload_handler: JobWorkloadHandler,
         workflow_workload_handler: WorkflowWorkloadHandler,
+        output_port_handler: OutputPortHandler,
         task_repository: MemoryTaskRepository,
         background_tasks: BackgroundTasks,
     ):
         self.workspace_handler = workspace_handler
         self.job_workload_handler = job_workload_handler
         self.workflow_workload_handler = workflow_workload_handler
+        self.output_port_handler = output_port_handler
         self.task_repository = task_repository
         self.background_tasks = background_tasks
 
@@ -121,6 +130,14 @@ class ProvisionService:
         remove_data: bool,
         is_provisioning: bool,
     ) -> None:
+        if not isinstance(component, JobWorkload) and not isinstance(component, WorkflowWorkload):
+            error_msg = (
+                f"The component {component.name} is of type 'workload' but"
+                f"doesn't have the expected structure for any supported Databricks workload"
+            )
+            logger.error(error_msg)
+            raise ProvisioningError([error_msg])
+
         result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
         if is_provisioning:
             workspace_info = self.workspace_handler.provision_workspace(data_product, component)
@@ -169,11 +186,40 @@ class ProvisionService:
         remove_data: bool,
         is_provisioning: bool,
     ) -> None:
-        # TODO method
-        error_msg = (
-            f"The kind '{component.kind}' of the component '{component.id}' is not supported by this Tech Adapter"
-        )
-        self.task_repository.update_task(id=task_id, status=Status1.FAILED, result=error_msg)
+        if not isinstance(component, DatabricksOutputPort):
+            error_msg = (
+                f"The component {component.name} is of type 'outputport' but"
+                f"doesn't have the expected structure for any supported Databricks Output Port"
+            )
+            logger.error(error_msg)
+            raise ProvisioningError([error_msg])
+
+        result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
+        if is_provisioning:
+            workspace_info = self.workspace_handler.provision_workspace(data_product, component)
+            self._raise_if_workspace_not_ready(workspace_info)
+            workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
+            result = self._provision_output_port(data_product, component, workspace_info, workspace_client)
+            logger.success("Output Port provisioning successful with resulting Provisioning Status {}", result)
+        else:
+            existing_workspace_info = self.workspace_handler.get_workspace_info(component)
+            if not existing_workspace_info:
+                message = (
+                    f"Unprovision skipped for component {component.name}, "
+                    f"Workspace {component.specific.workspace} not found"
+                )
+                logger.info(message)
+                self.task_repository.update_task(id=task_id, status=Status1.COMPLETED, result=message)
+                return
+            self._raise_if_workspace_not_ready(existing_workspace_info)
+            workspace_client = self.workspace_handler.get_workspace_client(existing_workspace_info)
+            if isinstance(component, DatabricksOutputPort):
+                result = self._unprovision_output_port(
+                    data_product, component, existing_workspace_info, workspace_client
+                )
+                logger.success("Output Port unprovisioning successful with resulting Provisioning Status {}", result)
+
+        self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
 
     def _provision_job(
         self,
@@ -250,6 +296,59 @@ class ProvisionService:
         self.workflow_workload_handler.unprovision_workload(
             data_product, component, remove_data, workspace_client, workspace_info
         )
+        return ProvisioningStatus(status=Status1.COMPLETED, result="")
+
+    def _provision_output_port(
+        self,
+        data_product: DataProduct,
+        component: DatabricksOutputPort,
+        workspace_info: DatabricksWorkspaceInfo,
+        workspace_client: WorkspaceClient,
+    ) -> ProvisioningStatus:
+        # 1. Attach metastore if workspace is managed
+        if workspace_info.is_managed:
+            # TODO uncomment and test
+            # unity_catalog_manager.attach_metastore(specific.metastore)
+            error_msg = "Witboost managed workspace are not yet supported on this version"
+            logger.error(error_msg)
+            raise ProvisioningError([error_msg])
+        else:
+            logger.info("Skipping metastore attachment as workspace is not managed.")
+
+        # After attaching the metastore, we check again the existence before actually provisioning
+        op_validation_service = OutputPortValidation(self.workspace_handler)
+        op_validation_service.validate_table_existence_and_schema(
+            workspace_client, component, data_product.environment, workspace_info
+        )
+
+        table_info = self.output_port_handler.provision_output_port(
+            data_product, component, workspace_client, workspace_info
+        )
+
+        table_url = (
+            f"https://{workspace_info.databricks_host}/explore/data/"
+            f"{table_info.catalog_name}/{table_info.schema_name}/{table_info.name}"
+        )
+        info = {
+            "tableID": {"type": "string", "label": "Table ID", "value": table_info.table_id},
+            "tableFullName": {"type": "string", "label": "Table full name", "value": table_info.full_name},
+            "tableUrl": {
+                "type": "string",
+                "label": "Table URL",
+                "value": "Open table in Databricks",
+                "href": table_url,
+            },
+        }
+        return ProvisioningStatus(status=Status1.COMPLETED, result="", info=Info(publicInfo=info, privateInfo=info))
+
+    def _unprovision_output_port(
+        self,
+        data_product: DataProduct,
+        component: DatabricksOutputPort,
+        workspace_info: DatabricksWorkspaceInfo,
+        workspace_client: WorkspaceClient,
+    ) -> ProvisioningStatus:
+        self.output_port_handler.unprovision_output_port(data_product, component, workspace_client, workspace_info)
         return ProvisioningStatus(status=Status1.COMPLETED, result="")
 
     def _raise_if_workspace_not_ready(self, workspace_info: DatabricksWorkspaceInfo) -> None:

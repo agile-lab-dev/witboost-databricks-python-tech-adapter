@@ -5,12 +5,13 @@ import yaml
 from loguru import logger
 from pydantic import BaseModel
 
-from src.models.api_models import ValidationError
+from src.models.api_models import RequestValidationError
+from src.utility.error_builder import build_request_validation_error
 
 T = TypeVar("T", bound=BaseModel)
 
 
-def parse_yaml_with_model(yaml_data: dict | str, model: Type[T]) -> T | ValidationError:
+def parse_yaml_with_model(yaml_data: dict | str, model: Type[T]) -> T | RequestValidationError:
     """
     Parse YAML data using a Pydantic model.
 
@@ -73,7 +74,7 @@ def parse_yaml_with_model(yaml_data: dict | str, model: Type[T]) -> T | Validati
                 )
             )
         ]
-        return ValidationError(errors=combined)
+        return build_request_validation_error(problems=combined)
     except Exception as e:
         logger.exception("Unexpected error")
         raise e
