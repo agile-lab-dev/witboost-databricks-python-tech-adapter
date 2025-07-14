@@ -5,7 +5,7 @@ from loguru import logger
 from src.models.data_product_descriptor import DataProduct
 from src.models.databricks.databricks_models import JobWorkload
 from src.models.databricks.databricks_workspace_info import DatabricksWorkspaceInfo
-from src.models.exceptions import ProvisioningError
+from src.models.exceptions import ProvisioningError, build_error_message_from_chained_exception
 from src.service.clients.databricks.job_manager import JobManager
 from src.service.clients.databricks.repo_manager import RepoManager
 from src.service.clients.databricks.workspace_manager import WorkspaceManager
@@ -134,7 +134,7 @@ class JobWorkloadHandler(BaseWorkloadHandler):
 
             if errors:
                 logger.error("{} errors found while deleting jobs: {}", len(errors), errors)
-                raise ProvisioningError([str(error) for error in errors])
+                raise ProvisioningError([build_error_message_from_chained_exception(error) for error in errors])
 
             # Delete the repository if requested
             if remove_data:

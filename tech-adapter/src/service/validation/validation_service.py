@@ -11,10 +11,11 @@ from src.models.data_product_descriptor import Component, ComponentKind, DataPro
 from src.models.databricks.databricks_models import (
     DatabricksComponent,
     DatabricksOutputPort,
+    DLTWorkload,
     JobWorkload,
     WorkflowWorkload,
 )
-from src.models.exceptions import get_error_list_from_chained_exception
+from src.models.exceptions import ProvisioningError, get_error_list_from_chained_exception
 from src.service.validation.output_port_validation_service import OutputPortValidation
 from src.utility.use_case_template_id_utils import get_use_case_template_id
 
@@ -27,8 +28,12 @@ def _parse_component(component: Component) -> DatabricksComponent:
         return WorkflowWorkload.parse_obj(component.dict(by_alias=True))
     elif use_case_template_id in settings.usecasetemplateid.outputPort:
         return DatabricksOutputPort.parse_obj(component.dict(by_alias=True))
+    elif use_case_template_id in settings.usecasetemplateid.workload.dlt:
+        return DLTWorkload.parse_obj(component.dict(by_alias=True))
     else:
-        raise NotImplementedError("Other components are not yet supported by this Tech Adapter")  # TODO
+        error_msg = f"Received component with unsupported use case template id '{component.useCaseTemplateId}'"
+        logger.error(error_msg)
+        raise ProvisioningError([error_msg])
 
 
 def validate(

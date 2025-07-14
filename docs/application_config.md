@@ -121,11 +121,11 @@ Other configurations can be set on the `application.yaml`:
 
 ```yaml
 git:
-  provider: GITLAB
+  provider: gitLab
 
 ```
 
-* **git.provider**: The Git provider, the default is set to `GITLAB`.
+* **git.provider**: The Git provider, in this case set to `gitLab`. The allowed values are: `gitHub`, `bitbucketCloud`, `gitLab`, `azureDevOpsServices`, `gitHubEnterprise`, `bitbucketServer`, `gitLabEnterpriseEdition` and `awsCodeCommit`
 
 
 ## `usecasetemplateid` Section

@@ -55,7 +55,7 @@ class JobClusterSpecific(BaseModel):
     sparkConf: Optional[List[KeyValueProperty]] = None
 
     # This has been ported back to the original version not discriminated by environment
-    sparkEnvVars: Optional[List[KeyValueProperty]] = None
+    spark_env_vars: Optional[List[KeyValueProperty]] = Field(None, alias="sparkEnvVars")
 
     runtimeEngine: Optional[RuntimeEngine] = None
 

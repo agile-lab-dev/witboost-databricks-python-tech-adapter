@@ -324,6 +324,7 @@ class UnityCatalogManager:
 
     def check_catalog_existence(self, catalog_name: str) -> bool:
         try:
+            logger.info("Checking existence of catalog {} in {}", catalog_name, self.workspace_info.name)
             catalogs_list = list(self.workspace_client.catalogs.list())
             return any(cat.name and cat.name.lower() == catalog_name.lower() for cat in catalogs_list)
         except Exception as e:

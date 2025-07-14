@@ -20,7 +20,7 @@ databricks:
       developer: "SELECT"     #ALL_PRIVILEGES, APPLY_TAG, SELECT
 
 git:
-  provider: GITLAB
+  provider: gitLab
 
 usecasetemplateid:
   workload:

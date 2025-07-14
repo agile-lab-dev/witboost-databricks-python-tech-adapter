@@ -16,6 +16,7 @@ from src.models.data_product_descriptor import DataProduct
 from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
 from src.service.clients.azure.azure_workspace_manager import AzureWorkspaceManager
 from src.service.clients.databricks.account_client import get_account_client
+from src.service.provision.handler.dlt_workload_handler import DLTWorkloadHandler
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
 from src.service.provision.handler.output_port_handler import OutputPortHandler
 from src.service.provision.handler.workflow_workload_handler import WorkflowWorkloadHandler
@@ -169,6 +170,7 @@ def create_provision_service(
         workspace_handler,
         JobWorkloadHandler(account_client),
         WorkflowWorkloadHandler(account_client),
+        DLTWorkloadHandler(account_client),
         OutputPortHandler(account_client),
         task_repository,
         background_tasks,

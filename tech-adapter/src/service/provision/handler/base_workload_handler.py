@@ -48,9 +48,11 @@ class BaseWorkloadHandler:
                 workspace_manager = WorkspaceManager(workspace_client, self.account_client)
 
                 # Set git credentials for the provisioning principal
+
                 workspace_manager.set_git_credentials(settings.git)
 
                 folder_path = os.path.dirname(repo_path)
+                logger.info("Creating parent directory '/{}'", folder_path)
                 workspace_client.workspace.mkdirs(path=f"/{folder_path}")
 
                 repo_path_full = f"/{repo_path}"

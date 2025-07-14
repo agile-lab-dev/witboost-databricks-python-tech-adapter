@@ -10,6 +10,7 @@ from src.models.data_product_descriptor import ComponentKind, DataProduct
 from src.models.databricks.databricks_models import (
     DatabricksComponent,
     DatabricksOutputPort,
+    DLTWorkload,
     JobWorkload,
     WorkflowWorkload,
 )
@@ -18,6 +19,7 @@ from src.models.databricks.exceptions import DatabricksError
 from src.models.exceptions import ProvisioningError, build_error_message_from_chained_exception
 from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
 from src.service.clients.databricks.job_manager import JobManager
+from src.service.provision.handler.dlt_workload_handler import DLTWorkloadHandler
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
 from src.service.provision.handler.output_port_handler import OutputPortHandler
 from src.service.provision.handler.workflow_workload_handler import WorkflowWorkloadHandler
@@ -32,6 +34,7 @@ class ProvisionService:
         workspace_handler: WorkspaceHandler,
         job_workload_handler: JobWorkloadHandler,
         workflow_workload_handler: WorkflowWorkloadHandler,
+        dlt_workload_handler: DLTWorkloadHandler,
         output_port_handler: OutputPortHandler,
         task_repository: MemoryTaskRepository,
         background_tasks: BackgroundTasks,
@@ -39,6 +42,7 @@ class ProvisionService:
         self.workspace_handler = workspace_handler
         self.job_workload_handler = job_workload_handler
         self.workflow_workload_handler = workflow_workload_handler
+        self.dlt_workload_handler = dlt_workload_handler
         self.output_port_handler = output_port_handler
         self.task_repository = task_repository
         self.background_tasks = background_tasks
@@ -130,7 +134,11 @@ class ProvisionService:
         remove_data: bool,
         is_provisioning: bool,
     ) -> None:
-        if not isinstance(component, JobWorkload) and not isinstance(component, WorkflowWorkload):
+        if (
+            not isinstance(component, JobWorkload)
+            and not isinstance(component, WorkflowWorkload)
+            and not isinstance(component, DLTWorkload)
+        ):
             error_msg = (
                 f"The component {component.name} is of type 'workload' but"
                 f"doesn't have the expected structure for any supported Databricks workload"
@@ -150,6 +158,9 @@ class ProvisionService:
             elif isinstance(component, WorkflowWorkload):
                 result = self._provision_workflow(data_product, component, workspace_info, workspace_client)
                 logger.success("Workflow provisioning successful with resulting Provisioning Status {}", result)
+            elif isinstance(component, DLTWorkload):
+                result = self._provision_dlt(data_product, component, workspace_info, workspace_client)
+                logger.success("DLT provisioning successful with resulting Provisioning Status {}", result)
 
             self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
         else:
@@ -175,7 +186,11 @@ class ProvisionService:
                     data_product, component, remove_data, existing_workspace_info, workspace_client
                 )
                 logger.success("Workflow unprovisioning successful with resulting Provisioning Status {}", result)
-
+            elif isinstance(component, DLTWorkload):
+                result = self._unprovision_dlt(
+                    data_product, component, remove_data, existing_workspace_info, workspace_client
+                )
+                logger.success("DLT unprovisioning successful with resulting Provisioning Status {}", result)
             self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
 
     def _handle_output_port(
@@ -349,6 +364,46 @@ class ProvisionService:
         workspace_client: WorkspaceClient,
     ) -> ProvisioningStatus:
         self.output_port_handler.unprovision_output_port(data_product, component, workspace_client, workspace_info)
+        return ProvisioningStatus(status=Status1.COMPLETED, result="")
+
+    def _provision_dlt(
+        self,
+        data_product: DataProduct,
+        component: DLTWorkload,
+        workspace_info: DatabricksWorkspaceInfo,
+        workspace_client: WorkspaceClient,
+    ):
+        pipeline_id = self.dlt_workload_handler.provision_workload(
+            data_product, component, workspace_client, workspace_info
+        )
+        pipeline_url = f"https://{workspace_info.databricks_host}/pipelines/{pipeline_id}"
+        info = {
+            "workspaceURL": {
+                "type": "string",
+                "label": "Databricks workspace URL",
+                "value": "Open Azure Databricks Workspace",
+                "href": workspace_info.azure_resource_url,
+            },
+            "pipelineURL": {
+                "type": "string",
+                "label": "Pipeline URL",
+                "value": "Open pipeline details in Databricks",
+                "href": pipeline_url,
+            },
+        }
+        return ProvisioningStatus(status=Status1.COMPLETED, result="", info=Info(publicInfo=info, privateInfo=info))
+
+    def _unprovision_dlt(
+        self,
+        data_product: DataProduct,
+        component: DLTWorkload,
+        remove_data: bool,
+        workspace_info: DatabricksWorkspaceInfo,
+        workspace_client: WorkspaceClient,
+    ) -> ProvisioningStatus:
+        self.dlt_workload_handler.unprovision_workload(
+            data_product, component, remove_data, workspace_client, workspace_info
+        )
         return ProvisioningStatus(status=Status1.COMPLETED, result="")
 
     def _raise_if_workspace_not_ready(self, workspace_info: DatabricksWorkspaceInfo) -> None:

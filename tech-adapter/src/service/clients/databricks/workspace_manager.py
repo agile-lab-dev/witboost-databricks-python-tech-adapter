@@ -124,7 +124,7 @@ class WorkspaceManager:
                 workspace_name = self.get_workspace_name()
                 username = git_config.username
                 token = git_config.token
-                provider = git_config.provider.upper()
+                provider = git_config.provider
 
                 logger.info(
                     "Setting {} credentials on workspace '{}' with username {}", provider, workspace_name, username

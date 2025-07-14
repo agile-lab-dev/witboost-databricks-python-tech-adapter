@@ -1,8 +1,8 @@
 from typing import Union
 
 from src.models.data_product_descriptor import OutputPort, Workload
-from src.models.databricks.databricks_component_specific import DatabricksComponentSpecific
 from src.models.databricks.outputport.databricks_outputport_specific import DatabricksOutputPortSpecific
+from src.models.databricks.workload.databricks_dlt_workload_specific import DatabricksDLTWorkloadSpecific
 from src.models.databricks.workload.databricks_workflow_specific import DatabricksWorkflowWorkloadSpecific
 from src.models.databricks.workload.databricks_workload_specific import DatabricksJobWorkloadSpecific
 
@@ -18,7 +18,7 @@ class WorkflowWorkload(Workload):
 
 
 class DLTWorkload(Workload):
-    specific: DatabricksComponentSpecific  # TODO refine definition
+    specific: DatabricksDLTWorkloadSpecific
 
 
 class DatabricksOutputPort(OutputPort):

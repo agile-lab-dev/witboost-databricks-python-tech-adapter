@@ -240,9 +240,9 @@ class JobManager:
         job_parameters = (
             [
                 JobParameterDefinition(name=property.name, default=property.value)
-                for property in job_cluster_specific.sparkEnvVars
+                for property in job_cluster_specific.spark_env_vars
             ]
-            if job_cluster_specific.sparkEnvVars
+            if job_cluster_specific.spark_env_vars
             else []
         )
 
@@ -289,8 +289,8 @@ class JobManager:
             spark_conf={conf.name: conf.value for conf in job_cluster_specific.sparkConf}
             if job_cluster_specific.sparkConf
             else {},
-            spark_env_vars={conf.name: conf.value for conf in job_cluster_specific.sparkEnvVars}
-            if job_cluster_specific.sparkEnvVars
+            spark_env_vars={conf.name: conf.value for conf in job_cluster_specific.spark_env_vars}
+            if job_cluster_specific.spark_env_vars
             else {},
             data_security_mode=DataSecurityMode.SINGLE_USER,
             runtime_engine=job_cluster_specific.runtimeEngine,
