@@ -1,33 +1,14 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Set, Union
+from typing import Dict, Mapping, Set, Union
 
 from databricks.sdk import AccountClient
 from loguru import logger
 
 from src.models.databricks.exceptions import DatabricksMapperError
+from src.service.principals_mapping.mapper import Mapper
 
 # Constants for subject prefixes
 USER_PREFIX = "user:"
 GROUP_PREFIX = "group:"
-
-
-class Mapper(ABC):
-    @abstractmethod
-    def map(self, subjects: Set[str]) -> Dict[str, Union[str, DatabricksMapperError]]:
-        """
-        Defines the main mapping logic for a set of subjects.
-
-        Args:
-            subjects: A set of strings representing the subjects to be mapped
-                      (e.g., WitBoost users and groups).
-
-        Returns:
-            A dictionary where:
-            - Keys are the original subject strings from the input set.
-            - Values are either the successfully mapped principal (str) on success,
-              or an Exception object on failure for that specific subject.
-        """
-        pass
 
 
 class DatabricksMapper(Mapper):
@@ -87,7 +68,7 @@ class DatabricksMapper(Mapper):
         logger.info("Group found: correct displayName is '{}'", group_name_case_sensitive)
         return group_name_case_sensitive
 
-    def map(self, subjects: Set[str]) -> Dict[str, Union[str, DatabricksMapperError]]:
+    def map(self, subjects: Set[str]) -> Mapping[str, Union[str, DatabricksMapperError]]:
         """
         Maps a set of subject identifiers to their target representation.
 
@@ -114,12 +95,14 @@ class DatabricksMapper(Mapper):
     def _map_subject(self, ref: str) -> str:
         if ref.startswith(USER_PREFIX):
             user_part = ref[len(USER_PREFIX) :]
-            return self._get_and_map_user(user_part)
-
+            mapped_user = self._get_and_map_user(user_part)
+            logger.debug("Mapped successfully '{}' to '{}'", ref, mapped_user)
+            return mapped_user
         if ref.startswith(GROUP_PREFIX):
             group_part = ref[len(GROUP_PREFIX) :]
-            return self.retrieve_case_sensitive_group_display_name(group_part)
-
+            mapped_group = self.retrieve_case_sensitive_group_display_name(group_part)
+            logger.debug("Mapped successfully '{}' to '{}'", ref, mapped_group)
+            return mapped_group
         error_msg = f"The subject '{ref}' is neither a Witboost user nor a group."
         logger.error(error_msg)
         raise DatabricksMapperError(error_msg)

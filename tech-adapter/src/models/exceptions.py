@@ -30,6 +30,12 @@ class ReverseProvisioningError(ProvisioningError):
     pass
 
 
+class WorkspaceHandlerError(ProvisioningError):
+    """Base exception for failures on the WorkspaceHandler class."""
+
+    pass
+
+
 def get_error_list_from_chained_exception(e: BaseException) -> list[str]:
     ex = e
     result = [str(e)]

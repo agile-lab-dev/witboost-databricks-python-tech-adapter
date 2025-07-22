@@ -2,8 +2,11 @@ from typing import Annotated, Tuple
 
 import yaml
 from azure.identity import DefaultAzureCredential
+from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.databricks import AzureDatabricksManagementClient
+from azure.mgmt.databricks.aio import AzureDatabricksManagementClient as AsyncAzureDatabricksManagementClient
 from fastapi import BackgroundTasks, Depends
+from msgraph import GraphServiceClient
 
 from src import settings
 from src.models.api_models import (
@@ -13,9 +16,12 @@ from src.models.api_models import (
     UpdateAclRequest,
 )
 from src.models.data_product_descriptor import DataProduct
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_graph_client import AzureGraphClient
+from src.service.clients.azure.azure_permissions_manager import AzurePermissionsManager
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.clients.azure.azure_workspace_manager import AzureWorkspaceManager
 from src.service.clients.databricks.account_client import get_account_client
+from src.service.principals_mapping.azure_mapper import AzureMapper
 from src.service.provision.handler.dlt_workload_handler import DLTWorkloadHandler
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
 from src.service.provision.handler.output_port_handler import OutputPortHandler
@@ -145,18 +151,40 @@ UnpackedUpdateAclRequestDep = Annotated[
 ]
 
 
-def get_workspace_handler() -> WorkspaceHandler:
+async def get_workspace_handler():
     azure_workspace_manager = AzureWorkspaceManager(
-        AzureDatabricksManagementClient(
+        sync_azure_databricks_manager=AzureDatabricksManagementClient(
+            credential=DefaultAzureCredential(),  # type:ignore[arg-type]
+            subscription_id=settings.azure.auth.subscription_id,
+        ),
+        async_azure_databricks_manager=AsyncAzureDatabricksManagementClient(
+            credential=DefaultAzureCredential(),  # type:ignore[arg-type]
+            subscription_id=settings.azure.auth.subscription_id,
+        ),
+    )
+    azure_permissions_manager = AzurePermissionsManager(
+        AuthorizationManagementClient(
             credential=DefaultAzureCredential(),  # type:ignore[arg-type]
             subscription_id=settings.azure.auth.subscription_id,
         )
     )
-    workspace_handler = WorkspaceHandler(azure_workspace_manager)
-    return workspace_handler
+    azure_mapper = AzureMapper(
+        AzureGraphClient(
+            GraphServiceClient(
+                credentials=DefaultAzureCredential(),  # type:ignore[arg-type]
+                scopes=["https://graph.microsoft.com/.default"],
+            )
+        )
+    )
+    workspace_handler = AzureWorkspaceHandler(azure_workspace_manager, azure_permissions_manager, azure_mapper)
+    # We yield so that after the execution of the provision task, we can close the aio session
+    try:
+        yield workspace_handler
+    finally:
+        await azure_workspace_manager.async_azure_databricks_manager.close()
 
 
-WorkspaceHandlerDep = Annotated[WorkspaceHandler, Depends(get_workspace_handler)]
+WorkspaceHandlerDep = Annotated[AzureWorkspaceHandler, Depends(get_workspace_handler)]
 
 
 def create_provision_service(

@@ -71,6 +71,7 @@ class DatabricksWorkloadSpecific(DatabricksComponentSpecific):
     git: GitSpecific
     repoPath: str
     runAsPrincipalName: Optional[str] = None
+    metastore: Optional[str] = None
 
 
 class DatabricksJobWorkloadSpecific(DatabricksWorkloadSpecific):

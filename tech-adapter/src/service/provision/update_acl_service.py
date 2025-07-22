@@ -7,7 +7,7 @@ from src.models.data_product_descriptor import DataProduct
 from src.models.databricks.databricks_models import DatabricksComponent, DatabricksOutputPort
 from src.models.databricks.outputport.databricks_outputport_specific import DatabricksOutputPortSpecific
 from src.models.exceptions import build_error_message_from_chained_exception
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.clients.databricks.unity_catalog_manager import UnityCatalogManager
 from src.service.provision.handler.output_port_handler import OutputPortHandler
 from src.utility.error_builder import build_request_validation_error
@@ -20,7 +20,7 @@ class UpdateAclService:
 
     def __init__(
         self,
-        workspace_handler: WorkspaceHandler,
+        workspace_handler: AzureWorkspaceHandler,
         output_port_handler: OutputPortHandler,
     ):
         """

@@ -7,7 +7,7 @@ from src.models.data_product_descriptor import OpenMetadataColumn, OutputPort
 from src.models.databricks.databricks_models import DatabricksOutputPort
 from src.models.databricks.databricks_workspace_info import DatabricksWorkspaceInfo
 from src.models.exceptions import ProvisioningError
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.clients.databricks.unity_catalog_manager import UnityCatalogManager
 
 
@@ -16,7 +16,7 @@ class OutputPortValidation:
     A service dedicated to validating provisioning requests for Databricks Output Ports.
     """
 
-    def __init__(self, workspace_handler: WorkspaceHandler):
+    def __init__(self, workspace_handler: AzureWorkspaceHandler):
         """
         Initializes the validation service.
 
@@ -68,14 +68,22 @@ class OutputPortValidation:
             try:
                 workspace_client.metastores.current()
             except NotFound:
-                # This is considered a successful validation with a warning, so we return
-                logger.warning(
-                    "Validation of Output Port {} (id: {}) completed. "
-                    "ATTENTION: couldn't check source table as metastore is not attached yet to the workspace",
-                    component.name,
-                    component.id,
-                )
-                return
+                if workspace_info.is_managed:
+                    # This is considered a successful validation with a warning, so we return
+                    logger.warning(
+                        "Validation of Output Port {} (id: {}) completed. "
+                        "ATTENTION: couldn't check source table as metastore is not attached yet to the workspace",
+                        component.name,
+                        component.id,
+                    )
+                    return
+                else:
+                    error_msg = (
+                        f"Validation of Output Port {component.name} (id: {component.id}) failed. "
+                        f"No metastore assigned for the current workspace"
+                    )
+                    logger.error(error_msg)
+                    raise ProvisioningError([error_msg])
             except Exception as e:
                 error_msg = (
                     f"An unexpected error occurred while retrieving current metastore for workspace '{workspace_name}'."

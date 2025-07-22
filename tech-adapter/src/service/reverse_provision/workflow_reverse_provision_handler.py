@@ -14,7 +14,7 @@ from src.models.databricks.reverse_provision.workflow_reverse_provisioning_param
 from src.models.databricks.workload.databricks_workflow_specific import WorkflowTasksInfo
 from src.models.databricks.workload.databricks_workload_specific import DatabricksWorkloadSpecific
 from src.models.exceptions import ReverseProvisioningError
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.clients.databricks.job_manager import JobManager
 from src.service.clients.databricks.workflow_manager import WorkflowManager
 from src.service.clients.databricks.workspace_manager import WorkspaceManager
@@ -25,7 +25,7 @@ class WorkflowReverseProvisionHandler:
     Handles the reverse provisioning process for Databricks Workflow workloads.
     """
 
-    def __init__(self, account_client: AccountClient, workspace_handler: WorkspaceHandler):
+    def __init__(self, account_client: AccountClient, workspace_handler: AzureWorkspaceHandler):
         """
         Initializes the WorkflowReverseProvisionHandler.
 

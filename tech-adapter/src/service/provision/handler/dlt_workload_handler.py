@@ -62,11 +62,11 @@ class DLTWorkloadHandler(BaseWorkloadHandler):
 
             # 1. Attach metastore if workspace is managed
             if workspace_info.is_managed:
-                # TODO uncomment and test
-                # unity_catalog_manager.attach_metastore(specific.metastore)
-                error_msg = "Witboost managed workspace are not yet supported on this version"
-                logger.error(error_msg)
-                raise ProvisioningError([error_msg])
+                if not specific.metastore:
+                    error_msg = "Can't attach metastore as metastore name is not provided on the component specific"
+                    logger.error(error_msg)
+                    raise ProvisioningError([error_msg])
+                unity_catalog_manager.attach_metastore(specific.metastore)
             else:
                 logger.info("Skipping metastore attachment as workspace is not managed.")
 
@@ -88,6 +88,7 @@ class DLTWorkloadHandler(BaseWorkloadHandler):
                 logger.error(error_msg)
                 raise ProvisioningError([error_msg])
 
+            logger.debug("Creating repo with permissions to {} and {}", owner_id, dev_group_id)
             # 4. Create Git repository with initial permissions
             self.create_repository_with_permissions(
                 specific,

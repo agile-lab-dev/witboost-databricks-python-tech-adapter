@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from azure.mgmt.databricks.models import ProvisioningState
@@ -17,8 +18,9 @@ from src.models.databricks.databricks_models import (
 from src.models.databricks.databricks_workspace_info import DatabricksWorkspaceInfo
 from src.models.databricks.exceptions import DatabricksError
 from src.models.exceptions import ProvisioningError, build_error_message_from_chained_exception
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.clients.databricks.job_manager import JobManager
+from src.service.clients.databricks.unity_catalog_manager import UnityCatalogManager
 from src.service.provision.handler.dlt_workload_handler import DLTWorkloadHandler
 from src.service.provision.handler.job_workload_handler import JobWorkloadHandler
 from src.service.provision.handler.output_port_handler import OutputPortHandler
@@ -31,7 +33,7 @@ from src.service.validation.workflow_validation_service import validate_workflow
 class ProvisionService:
     def __init__(
         self,
-        workspace_handler: WorkspaceHandler,
+        workspace_handler: AzureWorkspaceHandler,
         job_workload_handler: JobWorkloadHandler,
         workflow_workload_handler: WorkflowWorkloadHandler,
         dlt_workload_handler: DLTWorkloadHandler,
@@ -47,7 +49,7 @@ class ProvisionService:
         self.task_repository = task_repository
         self.background_tasks = background_tasks
 
-    def _start_provisioning(
+    async def _start_provisioning(
         self,
         task_id: str,
         data_product: DataProduct,
@@ -57,9 +59,9 @@ class ProvisionService:
     ) -> None:
         try:
             if component.kind == ComponentKind.WORKLOAD:
-                self._handle_workload(task_id, data_product, component, remove_data, is_provisioning)
+                await self._handle_workload(task_id, data_product, component, remove_data, is_provisioning)
             elif component.kind == ComponentKind.OUTPUTPORT:
-                self._handle_output_port(task_id, data_product, component, remove_data, is_provisioning)
+                await self._handle_output_port(task_id, data_product, component, remove_data, is_provisioning)
             else:
                 error_msg = (
                     f"The kind '{component.kind}' of the component '{component.id}' "
@@ -126,7 +128,7 @@ class ProvisionService:
         logger.error(error_msg)
         return SystemErr(error=error_msg)
 
-    def _handle_workload(
+    async def _handle_workload(
         self,
         task_id: str,
         data_product: DataProduct,
@@ -146,54 +148,63 @@ class ProvisionService:
             logger.error(error_msg)
             raise ProvisioningError([error_msg])
 
-        result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
         if is_provisioning:
-            workspace_info = self.workspace_handler.provision_workspace(data_product, component)
-            self._raise_if_workspace_not_ready(workspace_info)
-            workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
+            workspace_info = await self.workspace_handler.provision_workspace(data_product, component)
 
-            if isinstance(component, JobWorkload):
-                result = self._provision_job(data_product, component, workspace_info, workspace_client)
-                logger.success("Job provisioning successful with resulting Provisioning Status {}", result)
-            elif isinstance(component, WorkflowWorkload):
-                result = self._provision_workflow(data_product, component, workspace_info, workspace_client)
-                logger.success("Workflow provisioning successful with resulting Provisioning Status {}", result)
-            elif isinstance(component, DLTWorkload):
-                result = self._provision_dlt(data_product, component, workspace_info, workspace_client)
-                logger.success("DLT provisioning successful with resulting Provisioning Status {}", result)
+        # We wrap the synchronous work to add turn it into an AsyncIO thread so that
+        # it doesn't block other incoming requests. This is possible if we assume the actions inside are neither
+        # CPU intensive nor blocked by external IO operations for long periods of time.
 
+        # In case this assumption fails to hold, we need to design other solutions,
+        # namely subprocessing, workers or Celery
+        def _handle_workload_sync():
+            result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
+            if is_provisioning:
+                self._raise_if_workspace_not_ready(workspace_info)
+                workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
+
+                if isinstance(component, JobWorkload):
+                    result = self._provision_job(data_product, component, workspace_info, workspace_client)
+                    logger.success("Job provisioning successful with resulting Provisioning Status {}", result)
+                elif isinstance(component, WorkflowWorkload):
+                    result = self._provision_workflow(data_product, component, workspace_info, workspace_client)
+                    logger.success("Workflow provisioning successful with resulting Provisioning Status {}", result)
+                elif isinstance(component, DLTWorkload):
+                    result = self._provision_dlt(data_product, component, workspace_info, workspace_client)
+                    logger.success("DLT provisioning successful with resulting Provisioning Status {}", result)
+            else:
+                existing_workspace_info = self.workspace_handler.get_workspace_info(component)
+                if not existing_workspace_info:
+                    message = (
+                        f"Unprovision skipped for component {component.name}, "
+                        f"Workspace {component.specific.workspace} not found"
+                    )
+                    logger.info(message)
+                    self.task_repository.update_task(id=task_id, status=Status1.COMPLETED, result=message)
+                    return
+                self._raise_if_workspace_not_ready(existing_workspace_info)
+                workspace_client = self.workspace_handler.get_workspace_client(existing_workspace_info)
+
+                if isinstance(component, JobWorkload):
+                    result = self._unprovision_job(
+                        data_product, component, remove_data, existing_workspace_info, workspace_client
+                    )
+                    logger.success("Job unprovisioning successful with resulting Provisioning Status {}", result)
+                elif isinstance(component, WorkflowWorkload):
+                    result = self._unprovision_workflow(
+                        data_product, component, remove_data, existing_workspace_info, workspace_client
+                    )
+                    logger.success("Workflow unprovisioning successful with resulting Provisioning Status {}", result)
+                elif isinstance(component, DLTWorkload):
+                    result = self._unprovision_dlt(
+                        data_product, component, remove_data, existing_workspace_info, workspace_client
+                    )
+                    logger.success("DLT unprovisioning successful with resulting Provisioning Status {}", result)
             self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
-        else:
-            existing_workspace_info = self.workspace_handler.get_workspace_info(component)
-            if not existing_workspace_info:
-                message = (
-                    f"Unprovision skipped for component {component.name}, "
-                    f"Workspace {component.specific.workspace} not found"
-                )
-                logger.info(message)
-                self.task_repository.update_task(id=task_id, status=Status1.COMPLETED, result=message)
-                return
-            self._raise_if_workspace_not_ready(existing_workspace_info)
-            workspace_client = self.workspace_handler.get_workspace_client(existing_workspace_info)
 
-            if isinstance(component, JobWorkload):
-                result = self._unprovision_job(
-                    data_product, component, remove_data, existing_workspace_info, workspace_client
-                )
-                logger.success("Job unprovisioning successful with resulting Provisioning Status {}", result)
-            elif isinstance(component, WorkflowWorkload):
-                result = self._unprovision_workflow(
-                    data_product, component, remove_data, existing_workspace_info, workspace_client
-                )
-                logger.success("Workflow unprovisioning successful with resulting Provisioning Status {}", result)
-            elif isinstance(component, DLTWorkload):
-                result = self._unprovision_dlt(
-                    data_product, component, remove_data, existing_workspace_info, workspace_client
-                )
-                logger.success("DLT unprovisioning successful with resulting Provisioning Status {}", result)
-            self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
+        await asyncio.to_thread(_handle_workload_sync)
 
-    def _handle_output_port(
+    async def _handle_output_port(
         self,
         task_id: str,
         data_product: DataProduct,
@@ -209,32 +220,47 @@ class ProvisionService:
             logger.error(error_msg)
             raise ProvisioningError([error_msg])
 
-        result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
         if is_provisioning:
-            workspace_info = self.workspace_handler.provision_workspace(data_product, component)
-            self._raise_if_workspace_not_ready(workspace_info)
-            workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
-            result = self._provision_output_port(data_product, component, workspace_info, workspace_client)
-            logger.success("Output Port provisioning successful with resulting Provisioning Status {}", result)
-        else:
-            existing_workspace_info = self.workspace_handler.get_workspace_info(component)
-            if not existing_workspace_info:
-                message = (
-                    f"Unprovision skipped for component {component.name}, "
-                    f"Workspace {component.specific.workspace} not found"
-                )
-                logger.info(message)
-                self.task_repository.update_task(id=task_id, status=Status1.COMPLETED, result=message)
-                return
-            self._raise_if_workspace_not_ready(existing_workspace_info)
-            workspace_client = self.workspace_handler.get_workspace_client(existing_workspace_info)
-            if isinstance(component, DatabricksOutputPort):
-                result = self._unprovision_output_port(
-                    data_product, component, existing_workspace_info, workspace_client
-                )
-                logger.success("Output Port unprovisioning successful with resulting Provisioning Status {}", result)
+            workspace_info = await self.workspace_handler.provision_workspace(data_product, component)
 
-        self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
+        # We wrap the synchronous work to add turn it into an AsyncIO thread so that it doesn't block
+        # other incoming requests. This is possible if we assume the actions inside are neither
+        # CPU intensive nor blocked by external IO operations for long periods of time.
+
+        # In case this assumption fails to hold, we need to design other solutions,
+        # namely subprocessing, workers or Celery
+        def _handle_output_port_sync():
+            result: ProvisioningStatus = ProvisioningStatus(status=Status1.FAILED, result="No action done")
+            if is_provisioning:
+                self._raise_if_workspace_not_ready(workspace_info)
+                workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
+                result = self._provision_output_port(data_product, component, workspace_info, workspace_client)
+                logger.success("Output Port provisioning successful with resulting Provisioning Status {}", result)
+            else:
+                existing_workspace_info = self.workspace_handler.get_workspace_info(component)
+                if not existing_workspace_info:
+                    message = (
+                        f"Unprovision skipped for component {component.name}, "
+                        f"Workspace {component.specific.workspace} not found"
+                    )
+                    logger.info(message)
+                    self.task_repository.update_task(id=task_id, status=Status1.COMPLETED, result=message)
+                    return
+                self._raise_if_workspace_not_ready(existing_workspace_info)
+                workspace_client = self.workspace_handler.get_workspace_client(existing_workspace_info)
+                if isinstance(component, DatabricksOutputPort):
+                    result = self._unprovision_output_port(
+                        data_product, component, existing_workspace_info, workspace_client
+                    )
+                    logger.success(
+                        "Output Port unprovisioning successful with resulting Provisioning Status {}", result
+                    )
+                self.task_repository.update_task(
+                    id=task_id, status=result.status, info=result.info, result=result.result
+                )
+            self.task_repository.update_task(id=task_id, status=result.status, info=result.info, result=result.result)
+
+        await asyncio.to_thread(_handle_output_port_sync)
 
     def _provision_job(
         self,
@@ -322,11 +348,12 @@ class ProvisionService:
     ) -> ProvisioningStatus:
         # 1. Attach metastore if workspace is managed
         if workspace_info.is_managed:
-            # TODO uncomment and test
-            # unity_catalog_manager.attach_metastore(specific.metastore)
-            error_msg = "Witboost managed workspace are not yet supported on this version"
-            logger.error(error_msg)
-            raise ProvisioningError([error_msg])
+            if not component.specific.metastore:
+                error_msg = "Cannot attach metastore as metastore name is not provided on the component specific"
+                logger.error(error_msg)
+                raise ProvisioningError([error_msg])
+            unity_catalog_manager = UnityCatalogManager(workspace_client, workspace_info)
+            unity_catalog_manager.attach_metastore(component.specific.metastore)
         else:
             logger.info("Skipping metastore attachment as workspace is not managed.")
 

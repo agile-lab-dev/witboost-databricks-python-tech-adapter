@@ -12,7 +12,7 @@ from src.models.databricks.reverse_provision.output_port_reverse_provisioning_pa
     OutputPortReverseProvisioningParams,
 )
 from src.models.exceptions import ReverseProvisioningError
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.clients.databricks.unity_catalog_manager import UnityCatalogManager
 
 # Module-level constants
@@ -25,7 +25,7 @@ class OutputPortReverseProvisionHandler:
     Handles the reverse provisioning process for Databricks Output Ports.
     """
 
-    def __init__(self, workspace_handler: WorkspaceHandler):
+    def __init__(self, workspace_handler: AzureWorkspaceHandler):
         """
         Initializes the handler.
 

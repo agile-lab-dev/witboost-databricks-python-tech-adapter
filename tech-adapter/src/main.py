@@ -66,7 +66,7 @@ async def log_request_response_middleware(request: Request, call_next):
     },
     tags=["TechAdapter"],
 )
-def provision(request: ValidatedDatabricksComponentDep, provision_service: ProvisionServiceDep) -> Response:
+async def provision(request: ValidatedDatabricksComponentDep, provision_service: ProvisionServiceDep) -> Response:
     """
     Deploy a data product or a single component starting from a provisioning descriptor
     """
@@ -115,7 +115,7 @@ def get_status(token: str, provision_service: ProvisionServiceDep) -> Response:
     },
     tags=["TechAdapter"],
 )
-def unprovision(request: ValidatedDatabricksComponentDep, provision_service: ProvisionServiceDep) -> Response:
+async def unprovision(request: ValidatedDatabricksComponentDep, provision_service: ProvisionServiceDep) -> Response:
     """
     Undeploy a data product or a single component
     given the provisioning descriptor relative to the latest complete provisioning request

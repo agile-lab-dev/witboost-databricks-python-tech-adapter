@@ -20,7 +20,7 @@ from src.models.api_models import (
     Status1,
     UpdateAclRequest,
 )
-from src.service.clients.azure.azure_workspace_handler import WorkspaceHandler
+from src.service.clients.azure.azure_workspace_handler import AzureWorkspaceHandler
 from src.service.provision.provision_service import ProvisionService
 from src.service.provision.update_acl_service import UpdateAclService
 from src.service.reverse_provision.reverse_provision_service import ReverseProvisionService
@@ -52,7 +52,7 @@ def override_reverse_provision_dependency() -> ReverseProvisionService:
     return mock
 
 
-def override_get_workspace_handler() -> WorkspaceHandler:
+def override_get_workspace_handler() -> AzureWorkspaceHandler:
     mock = Mock()
     mock.get_workspace_info_by_name.return_value = None
     return mock

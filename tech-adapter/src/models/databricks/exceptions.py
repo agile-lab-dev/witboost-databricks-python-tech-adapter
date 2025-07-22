@@ -15,11 +15,21 @@ class DatabricksError(Exception):
     pass
 
 
-class DatabricksMapperError(DatabricksError):
+class MapperError(DatabricksError):
+    """Base exception for all errors raised by a Principals Mapper."""
+
     pass
 
 
-class WorkspaceManagerError(DatabricksError):
+class DatabricksMapperError(MapperError):
+    pass
+
+
+class AzureMapperError(MapperError):
+    pass
+
+
+class DatabricksWorkspaceManagerError(DatabricksError):
     """
     Base exception for all errors raised by the WorkspaceManager.
 
@@ -43,8 +53,22 @@ class JobManagerError(DatabricksError):
     pass
 
 
-class WorkspaceHandlerError(DatabricksError):
-    """Base exception for failures on the WorkspaceHandler class."""
+class AzureWorkspaceManagerError(DatabricksError):
+    """Base exception for failures on operations regarding management of Databricks workspaces on Azure."""
+
+    pass
+
+
+class AzurePermissionsError(DatabricksError):
+    """
+    Raised for any failure during Azure permission management operations.
+    """
+
+    pass
+
+
+class AzureGraphClientError(DatabricksError):
+    """Base exception for errors raised by the Azure Graph Client."""
 
     pass
 
@@ -72,6 +96,15 @@ class UnityCatalogError(DatabricksError):
 class StatementExecutionError(DatabricksError):
     """
     Base exception for any failures during the execution of SQL statements
+    """
+
+    pass
+
+
+class IdentityManagerError(Exception):
+    """
+    Raised for any failure during identity management operations, such as
+    assigning users or groups to a workspace.
     """
 
     pass

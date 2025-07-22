@@ -18,7 +18,9 @@ from src.models.databricks.exceptions import DatabricksMapperError
 from src.models.databricks.workload.databricks_workload_specific import DatabricksWorkloadSpecific
 from src.models.exceptions import ProvisioningError
 from src.service.clients.azure.azure_workspace_handler import OAuthWorkspaceClientConfigParams, create_workspace_client
+from src.service.clients.databricks.identity_manager import IdentityManager
 from src.service.clients.databricks.repo_manager import RepoManager
+from src.service.clients.databricks.unity_catalog_manager import UnityCatalogManager
 from src.service.clients.databricks.workspace_manager import WorkspaceManager
 from src.service.principals_mapping.databricks_mapper import DatabricksMapper
 
@@ -69,10 +71,16 @@ class BaseWorkloadHandler:
 
                 # If workspace is managed, ensure users/groups exist with correct permissions
                 if workspace_info.is_managed:
-                    # TODO Manage workspace
-                    error_msg = "Witboost managed workspace are not yet supported on this version"
-                    logger.error(error_msg)
-                    raise ProvisioningError([error_msg])
+                    if not specific.metastore:
+                        error_msg = "Can't attach metastore as metastore name is not provided on the component specific"
+                        logger.error(error_msg)
+                        raise ProvisioningError([error_msg])
+                    unity_catalog_manager = UnityCatalogManager(workspace_client, workspace_info)
+                    unity_catalog_manager.attach_metastore(specific.metastore)
+
+                    identity_manager = IdentityManager(self.account_client, workspace_info)
+                    identity_manager.create_or_update_user_with_admin_privileges(owner_name)
+                    identity_manager.create_or_update_group_with_user_privileges(developer_group_name)
                 else:
                     logger.info(
                         "Skipping upsert of project owner and development group to workspace since workspace "

@@ -94,5 +94,4 @@ class DatabricksDLTWorkloadSpecific(DatabricksWorkloadSpecific):
     target: str
 
     files: Optional[List[str]] = None
-    metastore: Optional[str] = None
     notifications: Optional[List[PipelineNotification]] = None

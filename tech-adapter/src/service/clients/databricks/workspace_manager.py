@@ -8,7 +8,7 @@ from databricks.sdk import AccountClient, WorkspaceClient
 from databricks.sdk.service.iam import ServicePrincipal
 from loguru import logger
 
-from src.models.databricks.exceptions import WorkspaceManagerError
+from src.models.databricks.exceptions import DatabricksWorkspaceManagerError
 from src.settings.databricks_tech_adapter_settings import GitSettings
 
 
@@ -41,7 +41,7 @@ class WorkspaceManager:
         """
         workspace_host = self.workspace_client.config.host
         if not workspace_host:
-            raise WorkspaceManagerError("Workspace client host is not configured.")
+            raise DatabricksWorkspaceManagerError("Workspace client host is not configured.")
 
         logger.debug("Searching for workspace with host: {}", workspace_host)
         try:
@@ -52,10 +52,10 @@ class WorkspaceManager:
                     return workspaces.workspace_name
             error_msg = f"No workspace found for host: {workspace_host}"
             logger.error(error_msg)
-            raise WorkspaceManagerError(error_msg)
+            raise DatabricksWorkspaceManagerError(error_msg)
         except Exception as e:
             logger.error("Failed to list Databricks workspaces")
-            raise WorkspaceManagerError(f"Failed to list Databricks workspaces: {e}") from e
+            raise DatabricksWorkspaceManagerError(f"Failed to list Databricks workspaces: {e}") from e
 
     def get_sql_warehouse_id_from_name(self, sql_warehouse_name: str) -> str:
         """
@@ -77,10 +77,10 @@ class WorkspaceManager:
                     return warehouse.id
             error_msg = f"SQL Warehouse '{sql_warehouse_name}' not found in workspace '{self.get_workspace_name()}'"
             logger.error(error_msg)
-            raise WorkspaceManagerError(error_msg)
+            raise DatabricksWorkspaceManagerError(error_msg)
         except Exception as e:
             logger.error("Failed to list SQL warehouses")
-            raise WorkspaceManagerError(f"Failed to list SQL warehouses: {e}") from e
+            raise DatabricksWorkspaceManagerError(f"Failed to list SQL warehouses: {e}") from e
 
     def get_compute_cluster_id_from_name(self, cluster_name: str) -> str:
         """
@@ -102,10 +102,10 @@ class WorkspaceManager:
                     return cluster.cluster_id
             error_msg = f"Cluster '{cluster_name}' not found in workspace '{self.get_workspace_name()}'"
             logger.error(error_msg)
-            raise WorkspaceManagerError(error_msg)
+            raise DatabricksWorkspaceManagerError(error_msg)
         except Exception as e:
             logger.error("Failed to list compute clusters")
-            raise WorkspaceManagerError(f"Failed to list compute clusters: {e}") from e
+            raise DatabricksWorkspaceManagerError(f"Failed to list compute clusters: {e}") from e
 
     def set_git_credentials(self, git_config: GitSettings) -> None:
         """
@@ -161,7 +161,7 @@ class WorkspaceManager:
                 )
             except Exception as e:
                 logger.error(f"Error setting Git credentials in workspace '{self.get_workspace_name()}'")
-                raise WorkspaceManagerError(
+                raise DatabricksWorkspaceManagerError(
                     f"Error setting Git credentials in workspace '{self.get_workspace_name()}': {e}"
                 ) from e
 
@@ -192,11 +192,13 @@ class WorkspaceManager:
             error_msg = f"No principal named '{principal_name}' found in workspace '{workspace_name}'"
             logger.error(error_msg)
             return None
-        except WorkspaceManagerError:
+        except DatabricksWorkspaceManagerError:
             raise
         except Exception as e:
             logger.error("Error getting info for service principal '{}'", principal_name)
-            raise WorkspaceManagerError(f"Error getting info for service principal '{principal_name}': {e}") from e
+            raise DatabricksWorkspaceManagerError(
+                f"Error getting info for service principal '{principal_name}': {e}"
+            ) from e
 
     def get_service_principal(self, application_id: str) -> Optional[ServicePrincipal]:
         """
@@ -225,11 +227,11 @@ class WorkspaceManager:
             error_msg = f"No principal with ID '{application_id}' found in workspace '{workspace_name}'"
             logger.error(error_msg)
             return None
-        except WorkspaceManagerError:
+        except DatabricksWorkspaceManagerError:
             raise
         except Exception as e:
             logger.error("Error getting info for service principal '{}': {}", application_id, e)
-            raise WorkspaceManagerError(f"Error getting info for service principal '{application_id}'") from e
+            raise DatabricksWorkspaceManagerError(f"Error getting info for service principal '{application_id}'") from e
 
     def generate_secret_for_service_principal(
         self, service_principal_id: int, lifetime_seconds: int
@@ -265,10 +267,10 @@ class WorkspaceManager:
                 )
                 logger.error(error_msg)
                 logger.debug("Received response: {}", response)
-                raise WorkspaceManagerError(error_msg)
+                raise DatabricksWorkspaceManagerError(error_msg)
         except Exception as e:
             logger.error("Failed to generate secret for service principal '{}'", service_principal_id)
-            raise WorkspaceManagerError(
+            raise DatabricksWorkspaceManagerError(
                 f"Failed to generate secret for service principal '{service_principal_id}': {e}"
             ) from e
 
@@ -291,6 +293,6 @@ class WorkspaceManager:
             logger.info("Successfully deleted secret {} for service principal {}", secret_id, service_principal_id)
         except Exception as e:
             logger.error("Failed to delete secret {} for service principal {}", secret_id, service_principal_id)
-            raise WorkspaceManagerError(
+            raise DatabricksWorkspaceManagerError(
                 f"Failed to delete secret {secret_id} for service principal {service_principal_id}: {e}"
             ) from e
