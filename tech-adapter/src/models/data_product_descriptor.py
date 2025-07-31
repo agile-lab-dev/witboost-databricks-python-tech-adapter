@@ -67,6 +67,7 @@ class OpenMetadataColumn(BaseModel):
     name: str
     dataType: str
     dataLength: Optional[int] = None
+    constraint: Optional[str] = None
     precision: Optional[int] = None
     scale: Optional[int] = None
     description: Optional[str] = None
@@ -87,7 +88,7 @@ class OpenMetadataColumn(BaseModel):
 
 
 class DataContract(BaseModel):
-    schema_: Optional[List[OpenMetadataColumn]] = Field(..., alias="schema")
+    schema_: Optional[List[OpenMetadataColumn]] = Field(default=None, alias="schema")
 
 
 class DataSharingAgreement(BaseModel):

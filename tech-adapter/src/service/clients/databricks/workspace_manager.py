@@ -1,5 +1,3 @@
-# provisioning/databricks/client/workspace_manager.py
-
 import threading
 from functools import lru_cache
 from typing import Optional, Tuple

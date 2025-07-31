@@ -46,9 +46,8 @@ select = ["E", "F", "I"]
 [tool.pytest.ini_options]
 addopts = "-v"
 
-# TODO re-enable when tests are done
-#[tool.coverage.report]
-#fail_under = 90
+[tool.coverage.report]
+fail_under = 80
 
 [build-system]
 requires = ["poetry-core"]

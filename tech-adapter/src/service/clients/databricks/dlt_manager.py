@@ -338,6 +338,8 @@ class DLTManager:
                 else {},
             )
             return pipeline_id
+        except DLTManagerError:
+            raise
         except Exception as e:
             error_msg = f"An error occurred while updating DLT Pipeline {pipeline_name} in {self.workspace_name}."
             logger.error(

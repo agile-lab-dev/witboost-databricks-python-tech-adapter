@@ -2,7 +2,7 @@ import os
 from typing import List, Optional
 
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.errors import BadRequest, ResourceAlreadyExists, ResourceDoesNotExist
+from databricks.sdk.errors import ResourceAlreadyExists, ResourceDoesNotExist
 from databricks.sdk.service.workspace import (
     ObjectType,
     RepoAccessControlRequest,
@@ -43,7 +43,7 @@ class RepoManager:
             logger.info("Creating repo with URL {} at {} in {}", git_url, absolute_repo_path, self.workspace_name)
             repo_info = self.workspace_client.repos.create(
                 url=git_url,
-                provider=provider.upper(),
+                provider=provider,
                 path=absolute_repo_path,
             )
             if repo_info.id:
@@ -64,13 +64,6 @@ class RepoManager:
         except ResourceAlreadyExists:
             logger.info(f"Repo {git_url} in {self.workspace_name} already exists, handling...")
             return self._handle_existing_repository(git_url, absolute_repo_path)
-        except BadRequest as e:
-            if "RESOURCE_ALREADY_EXISTS" in str(e):
-                return self._handle_existing_repository(git_url, absolute_repo_path)
-
-            error_msg = f"Error creating repo {git_url} in {self.workspace_name}: {e}"
-            logger.error(error_msg)
-            raise RepoManagerError(error_msg) from e
         except Exception as e:
             error_msg = f"An unexpected error occurred creating repo {git_url} in {self.workspace_name}: {e}"
             logger.error(error_msg)

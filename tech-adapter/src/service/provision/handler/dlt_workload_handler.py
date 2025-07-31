@@ -124,6 +124,8 @@ class DLTWorkloadHandler(BaseWorkloadHandler):
 
             return pipeline_id
 
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Error provisioning component '{component_name}'"
             logger.error(error_msg)
@@ -190,7 +192,8 @@ class DLTWorkloadHandler(BaseWorkloadHandler):
                     specific.git.gitRepoUrl,
                     component_name,
                 )
-
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Error unprovisioning component '{component_name}'"
             logger.error("Error unprovisioning component '{}'. Details: {}", component_name, e)

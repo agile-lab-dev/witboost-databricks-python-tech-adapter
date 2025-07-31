@@ -41,9 +41,9 @@ def build_request_validation_error(
     more_info = ErrorMoreInfo(problems=problems, solutions=solutions)
 
     return RequestValidationError(
-        user_message=user_msg,
+        userMessage=user_msg,
         errors=problems,
-        input_str=input_str,
-        input_error_field=input_error_field,
-        more_info=more_info,
+        input=input_str,
+        inputErrorField=input_error_field,
+        moreInfo=more_info,
     )

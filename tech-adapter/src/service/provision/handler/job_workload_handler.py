@@ -84,7 +84,8 @@ class JobWorkloadHandler(BaseWorkloadHandler):
             logger.info("New job for component '{}' available at: {}", component_name, job_url)
 
             return str(job_id)
-
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Error provisioning component '{component_name}'"
             logger.error(error_msg)
@@ -150,6 +151,8 @@ class JobWorkloadHandler(BaseWorkloadHandler):
                     specific.git.gitRepoUrl,
                     component_name,
                 )
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Error unprovisioning component '{component_name}'"
             logger.error(error_msg)
@@ -194,6 +197,8 @@ class JobWorkloadHandler(BaseWorkloadHandler):
                 scheduling_specific=specific.scheduling,
                 job_git_specific=specific.git,
             )
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Error creating Databricks job for component '{component.name}'"
             logger.error(error_msg)

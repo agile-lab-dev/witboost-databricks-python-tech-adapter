@@ -163,7 +163,8 @@ class WorkflowWorkloadHandler(BaseWorkloadHandler):
 
             # Create or update the job in Databricks
             return workflow_manager.create_or_update_workflow(updated_workflow)
-
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = (
                 f"An error occurred while creating the new Databricks workflow for component {component_name}. "
@@ -243,7 +244,8 @@ class WorkflowWorkloadHandler(BaseWorkloadHandler):
                     specific.git.gitRepoUrl,
                     component_name,
                 )
-
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = (
                 f"An error occurred while unprovisioning component {component_name}. "

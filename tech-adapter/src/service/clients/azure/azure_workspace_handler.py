@@ -127,7 +127,6 @@ class AzureWorkspaceHandler:
             azure_workspace_manager: Client for Azure Databricks workspace operations.
             azure_permissions_manager: Client for managing Azure role assignments.
             azure_mapper: Client for mapping principals to Azure Object IDs.
-            workspace_client_factory: A factory function to create WorkspaceClient instances.
         """
         self.azure_workspace_manager = azure_workspace_manager
         self.azure_permissions_manager = azure_permissions_manager

@@ -69,7 +69,7 @@ class UpdateAclService:
             if not workspace_info:
                 error_msg = f"Update Acl failed: Unable to retrieve info for workspace '{workspace_name}'"
                 logger.error(error_msg)
-                return ProvisioningStatus(status=Status1.FAILED, message=error_msg, result=None)
+                return ProvisioningStatus(status=Status1.FAILED, result=error_msg)
 
             workspace_client = self.workspace_handler.get_workspace_client(workspace_info)
 

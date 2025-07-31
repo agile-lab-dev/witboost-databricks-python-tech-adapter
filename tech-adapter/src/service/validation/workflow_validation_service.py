@@ -34,7 +34,6 @@ def validate_workflow_for_provisioning(
 
     Args:
         component: The component being provisioned.
-        specific: The specific configuration for the workflow workload.
         environment: The name of the deployment environment (e.g., 'development').
         databricks_workspace_info: Information about the target Databricks workspace.
 

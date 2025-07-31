@@ -171,6 +171,8 @@ class WorkflowReverseProvisionHandler:
                 raise ReverseProvisioningError([error_msg])
 
             return workflow_list[0].job_id
+        except ReverseProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Failed to list jobs named '{workflow_name}' in workspace '{workspace_info.name}'"
             logger.error(error_msg)

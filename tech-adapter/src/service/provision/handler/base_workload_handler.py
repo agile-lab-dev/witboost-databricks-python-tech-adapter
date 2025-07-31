@@ -109,6 +109,12 @@ class BaseWorkloadHandler:
                     repo_manager.remove_permissions_from_group(repo_id_str, developer_group_name)
                 else:
                     permission = RepoPermissionLevel[repo_config_permissions.developer.upper()]
+                    logger.debug(
+                        "Granting {} to group '{}' for repository with id '{}'",
+                        permission,
+                        developer_group_name,
+                        repo_id,
+                    )
                     repo_manager.assign_permissions_to_group(repo_id_str, developer_group_name, permission)
 
             except Exception as e:
@@ -339,7 +345,8 @@ class BaseWorkloadHandler:
                 principal_name,
                 workspace_name,
             )
-
+        except ProvisioningError:
+            raise
         except Exception as e:
             error_msg = f"Failed to set Git credentials for principal '{principal_name}'"
             logger.error(error_msg)
